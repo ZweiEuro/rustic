@@ -20,7 +20,7 @@ pub trait IWorldObject {
     /**
      * Apply speed from the world info to the center position.
      */
-    fn update(&mut self, delta_time: f32) {
+    fn physics_update(&mut self, delta_time: f32) {
         let world_info = self.get_world_info();
         let mut center = world_info.center_pos;
         let speed = world_info.speed;

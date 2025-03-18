@@ -40,7 +40,7 @@ pub fn main() {
 
         let timedelta = last_update.elapsed();
 
-        cube.update(timedelta.as_secs_f32());
+        cube.physics_update(timedelta.as_secs_f32());
 
         last_update = std::time::Instant::now();
 
