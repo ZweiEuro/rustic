@@ -3,7 +3,12 @@ extern crate sdl3;
 use sdl3::event::Event;
 use sdl3::keyboard::Keycode;
 use sdl3::pixels::Color;
+use sdl3::render::FPoint;
 use std::time::Duration;
+use world_objects::IWorldObject;
+use world_objects::cube::Cube;
+
+mod world_objects;
 
 pub fn main() {
     let sdl_context = sdl3::init().unwrap();
@@ -21,11 +26,24 @@ pub fn main() {
     canvas.clear();
     canvas.present();
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut i = 0;
+
+    let mut cube = Cube::new(FPoint::new(100.0, 100.0), FPoint::new(500.0, 400.0));
+
+    let mut last_update = std::time::Instant::now();
+
     'running: loop {
-        i = (i + 1) % 255;
-        canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
+        canvas.set_draw_color(Color::RGB(255, 255, 255));
         canvas.clear();
+
+        cube.draw(&mut canvas);
+        cube.draw_center(&mut canvas);
+
+        let timedelta = last_update.elapsed();
+
+        cube.update(timedelta.as_secs_f32());
+
+        last_update = std::time::Instant::now();
+
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
