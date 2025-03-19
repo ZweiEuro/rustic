@@ -3,6 +3,14 @@ name = "rustic"
 version = "0.1.0"
 edition = "2024"
 
+[dependencies]
+parry2d= "0.18.0"
+
 [dependencies.sdl3]
 version = "0.14.16"
 features = [  ]
+
+
+[[bin]]
+name = "rustic"
+path = "src/main.rs"

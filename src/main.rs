@@ -1,14 +1,15 @@
 extern crate sdl3;
 
+use object::cube::Cube;
+use object::object::PhysicsUpdated;
+use object::{add_object, draw_all};
+use parry2d::na::Vector2;
 use sdl3::event::Event;
 use sdl3::keyboard::Keycode;
 use sdl3::pixels::Color;
-use sdl3::render::FPoint;
 use std::time::Duration;
-use world_objects::IWorldObject;
-use world_objects::cube::Cube;
 
-mod world_objects;
+mod object;
 
 pub fn main() {
     let sdl_context = sdl3::init().unwrap();
@@ -27,22 +28,15 @@ pub fn main() {
     canvas.present();
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    let mut cube = Cube::new(FPoint::new(100.0, 100.0), FPoint::new(500.0, 400.0));
+    let cube = Cube::new(Vector2::new(100.0, 100.0), Vector2::new(50.0, 50.0));
 
-    let mut last_update = std::time::Instant::now();
+    add_object(cube);
 
     'running: loop {
         canvas.set_draw_color(Color::RGB(255, 255, 255));
         canvas.clear();
 
-        cube.draw(&mut canvas);
-        cube.draw_center(&mut canvas);
-
-        let timedelta = last_update.elapsed();
-
-        cube.physics_update(timedelta.as_secs_f32());
-
-        last_update = std::time::Instant::now();
+        draw_all(&mut canvas);
 
         for event in event_pump.poll_iter() {
             match event {
