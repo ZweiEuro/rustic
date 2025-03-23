@@ -8,26 +8,39 @@ pub struct Cube {
 
     pub width: f32,
     pub height: f32,
+
+    // physics
+    pub is_static: bool,
 }
 
 impl Cube {
-    pub fn new(position: Vector2<f32>, size: Vector2<f32>) -> Cube {
+    pub fn new(
+        position: Vector2<f32>,
+        size: Vector2<f32>,
+        initial_speed: Vector2<f32>,
+        is_static: bool,
+    ) -> Cube {
         Cube {
             object: Object {
                 world_space_position: position,
                 physics_shape: parry2d::shape::Cuboid::new(size),
-                speed: Vector2::new(200.0, 50.0),
+                speed: initial_speed,
                 color: Color::RGB(0, 0, 0),
             },
             width: size.x,
             height: size.y,
+
+            //physics
+            is_static: is_static,
         }
     }
 }
 
 impl PhysicsUpdated for Cube {
     fn physics_update(&mut self, delta_time_s: f32) {
-        self.object.physics_update(delta_time_s);
+        if (!self.is_static) {
+            self.object.physics_update(delta_time_s);
+        }
     }
 }
 

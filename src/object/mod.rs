@@ -13,7 +13,7 @@ pub mod object;
 static OBJECT_MANAGER: LazyLock<Mutex<ObjectManager>> =
     LazyLock::new(|| Mutex::new(ObjectManager::new()));
 
-const PHYSICS_FPS: i32 = 60;
+const PHYSICS_FPS: i32 = 120;
 
 struct ObjectManager {
     objects: Vec<Box<dyn IWorldObject>>,

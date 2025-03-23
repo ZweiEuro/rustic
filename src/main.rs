@@ -7,9 +7,14 @@ use parry2d::na::Vector2;
 use sdl3::event::Event;
 use sdl3::keyboard::Keycode;
 use sdl3::pixels::Color;
+use std::thread::Thread;
 use std::time::Duration;
 
 mod object;
+
+use std::thread;
+
+static DRAW_FPS: i32 = 120;
 
 pub fn main() {
     let sdl_context = sdl3::init().unwrap();
@@ -28,9 +33,22 @@ pub fn main() {
     canvas.present();
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    let cube = Cube::new(Vector2::new(100.0, 100.0), Vector2::new(50.0, 50.0));
+    let cube = Cube::new(
+        Vector2::new(100.0, 100.0),
+        Vector2::new(50.0, 50.0),
+        Vector2::new(200.0, -100.0),
+        false,
+    );
+
+    let wall = Cube::new(
+        Vector2::new(0.0, 0.0),
+        Vector2::new(800.0, 10.0),
+        Vector2::new(0.0, 0.0),
+        true,
+    );
 
     add_object(cube);
+    add_object(wall);
 
     'running: loop {
         canvas.set_draw_color(Color::RGB(255, 255, 255));
@@ -51,6 +69,9 @@ pub fn main() {
         // The rest of the game loop goes here...
 
         canvas.present();
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+
+        thread::sleep(Duration::from_millis(
+            ((1.0 / DRAW_FPS as f32) * 1000.0) as u64,
+        ));
     }
 }
