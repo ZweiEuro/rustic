@@ -6,6 +6,12 @@ edition = "2024"
 [dependencies]
 parry2d= "0.18.0"
 
+
+[dependencies.specs]
+version = "0.20.0"
+features = [ "shred-derive", "parallel" ]
+
+
 [dependencies.sdl3]
 version = "0.14.16"
 features = [  ]

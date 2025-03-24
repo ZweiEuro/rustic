@@ -1,5 +1,7 @@
 use parry2d::shape::Shape;
 use sdl3::pixels::Color;
+use specs::Component;
+use specs::prelude::*;
 
 pub enum DrawableType {
     Rectangle,
@@ -16,4 +18,8 @@ pub struct Drawable {
 
     // Circle
     pub radius: f32,
+}
+
+impl Component for Drawable {
+    type Storage = VecStorage<Self>;
 }

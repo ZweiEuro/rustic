@@ -1,7 +1,6 @@
 extern crate sdl3;
 
 use components::{Collision, Drawable, Physics};
-use gen_vec::GenVec;
 use object::cube::Cube;
 use object::object::PhysicsUpdated;
 use object::{add_object, draw_all};
@@ -13,16 +12,12 @@ use std::thread::Thread;
 use std::time::Duration;
 
 mod components;
-mod gen_vec;
 mod object;
-mod system;
-mod ecs;
+mod systems;
 
 use std::thread;
 
 static DRAW_FPS: i32 = 120;
-
-
 
 pub fn main() {
     let sdl_context = sdl3::init().unwrap();
