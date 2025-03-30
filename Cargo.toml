@@ -13,8 +13,8 @@ features = [ "shred-derive", "parallel" ]
 
 
 [dependencies.sdl3]
-version = "0.14.16"
-features = [  ]
+version = "0.14.19"
+features = [ ]
 
 
 [[bin]]

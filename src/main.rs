@@ -1,9 +1,7 @@
 extern crate sdl3;
 
 use components::{Collision, Drawable, DrawableType, Physics};
-use object::cube::Cube;
-use object::object::PhysicsUpdated;
-use object::{add_object, draw_all};
+
 use parry2d::na::Vector2;
 use sdl3::event::Event;
 use sdl3::keyboard::Keycode;
@@ -15,7 +13,6 @@ use std::time::{Duration, Instant};
 use systems::{SysMovement, SysRender};
 
 mod components;
-mod object;
 mod systems;
 
 use std::thread;
@@ -34,6 +31,7 @@ pub fn main() {
     let window = video_subsystem
         .window("ECS test", 800, 600)
         .position_centered()
+        .opengl()
         .build()
         .unwrap();
 
@@ -53,7 +51,23 @@ pub fn main() {
     w.create_entity()
         .with(Physics {
             world_space_position: Vector2::new(0.0, 0.0),
-            velocity: Vector2::new(100.0, 100.0),
+            velocity: Vector2::new(100.0, 0.0),
+            mass: 1.0,
+            last_time_updated: Instant::now(),
+        })
+        .with(Drawable {
+            drawable_type: DrawableType::Rectangle,
+            color: Color::RGB(255, 0, 0),
+            width: 50.0,
+            height: 50.0,
+            radius: 0.0,
+        })
+        .build();
+
+    w.create_entity()
+        .with(Physics {
+            world_space_position: Vector2::new(200.0, 0.0),
+            velocity: Vector2::new(0.0, 0.0),
             mass: 1.0,
             last_time_updated: Instant::now(),
         })
