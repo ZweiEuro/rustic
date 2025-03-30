@@ -1,3 +1,5 @@
 mod movement;
+mod render;
 
-pub use movement::MovementSystem;
+pub use movement::SysMovement;
+pub use render::SysRender;

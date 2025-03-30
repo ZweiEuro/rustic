@@ -5,11 +5,11 @@ use specs::prelude::*;
 use crate::components::Physics;
 
 #[derive(SystemData)]
-struct PhysicsComp<'a> {
+pub struct PhysicsComp<'a> {
     physics: WriteStorage<'a, Physics>,
 }
 
-struct SysMovement;
+pub struct SysMovement;
 
 impl<'a> System<'a> for SysMovement {
     type SystemData = PhysicsComp<'a>;

@@ -38,7 +38,7 @@ impl Cube {
 
 impl PhysicsUpdated for Cube {
     fn physics_update(&mut self, delta_time_s: f32) {
-        if (!self.is_static) {
+        if !self.is_static {
             self.object.physics_update(delta_time_s);
         }
     }

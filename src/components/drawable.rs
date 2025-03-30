@@ -1,8 +1,8 @@
-use parry2d::shape::Shape;
 use sdl3::pixels::Color;
 use specs::Component;
 use specs::prelude::*;
 
+#[derive(Debug, Clone)]
 pub enum DrawableType {
     Rectangle,
     Circle,
