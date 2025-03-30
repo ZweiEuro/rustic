@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{f32::INFINITY, ops::Deref};
 
 use parry2d::{
     na::{Isometry2, Vector2},
@@ -45,6 +45,17 @@ impl<'a> System<'a> for SysCollision {
                 if res {
                     let m_a = objects[index_a].0.mass;
                     let m_b = objects[index_comp].0.mass;
+
+                    // if one of the objects has infinite mass, it is considered immovable
+                    // turn the other object around
+                    if m_a == INFINITY {
+                        objects[index_comp].0.velocity = -objects[index_comp].0.velocity;
+                        continue 'outer;
+                    } else if m_b == INFINITY {
+                        objects[index_a].0.velocity = -objects[index_a].0.velocity;
+                        continue 'outer;
+                    }
+
                     let v_a = objects[index_a].0.velocity;
                     let v_b = objects[index_comp].0.velocity;
 

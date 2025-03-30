@@ -8,17 +8,51 @@ use sdl3::keyboard::Keycode;
 use sdl3::pixels::Color;
 use specs::DispatcherBuilder;
 use specs::{prelude::*, storage::HashMapStorage};
+use std::f32::INFINITY;
 use std::thread::Thread;
 use std::time::{Duration, Instant};
 use systems::{SysCollision, SysMovement, SysRender};
+use world_objects::create_rect;
 
 mod components;
 mod systems;
+mod world_objects;
 
 use std::thread;
 
 static MAIN_LOOP_FPS: i32 = 120;
 
+pub fn create_game_objects(w: &mut World) {
+    create_rect(
+        w,
+        [50.0, 50.0],
+        [50.0, 50.0],
+        Some([500.0, 0.0]),
+        Some(2.0),
+        None,
+    );
+
+    create_rect(w, [200.0, 50.0], [50.0, 50.0], Some([0.0, 0.0]), None, None);
+
+    // world boundary
+    create_rect(
+        w,
+        [10.0, 50.0],
+        [10.0, 200.0],
+        None,
+        Some(INFINITY),
+        Some(Color::RGB(0, 0, 0)),
+    );
+
+    create_rect(
+        w,
+        [500.0, 50.0],
+        [10.0, 200.0],
+        None,
+        Some(INFINITY),
+        Some(Color::RGB(0, 0, 0)),
+    );
+}
 pub fn main() {
     print!("Hello, world!\n");
     let mut w = World::new();
@@ -49,43 +83,7 @@ pub fn main() {
     let mut dispatcher = dispatcher_builder.build();
     dispatcher.setup(&mut w);
 
-    w.create_entity()
-        .with(Physics {
-            world_space_position: Vector2::new(50.0, 50.0),
-            velocity: Vector2::new(100.0, 0.0),
-            mass: 1.0,
-            last_time_updated: Instant::now(),
-        })
-        .with(Drawable {
-            drawable_type: DrawableType::Rectangle,
-            color: Color::RGB(255, 0, 0),
-            width: 50.0,
-            height: 50.0,
-            radius: 0.0,
-        })
-        .with(Collision {
-            collision_shape: Box::new(parry2d::shape::Cuboid::new(Vector2::new(25.0, 25.0))),
-        })
-        .build();
-
-    w.create_entity()
-        .with(Physics {
-            world_space_position: Vector2::new(200.0, 50.0),
-            velocity: Vector2::new(0.0, 0.0),
-            mass: 1.0,
-            last_time_updated: Instant::now(),
-        })
-        .with(Drawable {
-            drawable_type: DrawableType::Rectangle,
-            color: Color::RGB(255, 0, 0),
-            width: 50.0,
-            height: 50.0,
-            radius: 0.0,
-        })
-        .with(Collision {
-            collision_shape: Box::new(parry2d::shape::Cuboid::new(Vector2::new(25.0, 25.0))),
-        })
-        .build();
+    create_game_objects(&mut w);
 
     'running: loop {
         for event in event_pump.poll_iter() {
