@@ -1,4 +1,4 @@
-use sdl3::Sdl;
+use sdl3::{Sdl, pixels::Color};
 use specs::prelude::*;
 
 use crate::components::{Drawable, DrawableType, Physics};
@@ -13,9 +13,6 @@ pub struct SysRender {
     pub canvas: sdl3::render::Canvas<sdl3::video::Window>,
 }
 
-unsafe impl Send for SysRender {}
-unsafe impl Sync for SysRender {}
-
 impl<'a> System<'a> for SysRender {
     type SystemData = PhysicsAndDrawable<'a>;
 
@@ -24,8 +21,7 @@ impl<'a> System<'a> for SysRender {
     }
 
     fn run(&mut self, data: PhysicsAndDrawable) {
-        print!("Rendering in thread: {:?}\n", std::thread::current().id());
-
+        self.canvas.set_draw_color(Color::RGB(255, 255, 255));
         self.canvas.clear();
 
         for (physics, drawable) in (&data.physics, &data.drawable).join() {
