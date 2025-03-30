@@ -1,7 +1,9 @@
+mod collision;
+mod input;
 mod movement;
 mod render;
-mod collision;
 
+pub use collision::SysCollision;
+pub use input::SysInput;
 pub use movement::SysMovement;
 pub use render::SysRender;
-pub use collision::SysCollision;
