@@ -10,7 +10,7 @@ use specs::DispatcherBuilder;
 use specs::{prelude::*, storage::HashMapStorage};
 use std::thread::Thread;
 use std::time::{Duration, Instant};
-use systems::{SysMovement, SysRender};
+use systems::{SysCollision, SysMovement, SysRender};
 
 mod components;
 mod systems;
@@ -41,6 +41,7 @@ pub fn main() {
 
     let mut dispatcher_builder = DispatcherBuilder::new()
         .with(SysMovement, "movement", &[])
+        .with(SysCollision, "collision", &[])
         .with_thread_local(SysRender {
             canvas: window.into_canvas(),
         });
@@ -50,7 +51,7 @@ pub fn main() {
 
     w.create_entity()
         .with(Physics {
-            world_space_position: Vector2::new(0.0, 0.0),
+            world_space_position: Vector2::new(50.0, 50.0),
             velocity: Vector2::new(100.0, 0.0),
             mass: 1.0,
             last_time_updated: Instant::now(),
@@ -62,11 +63,14 @@ pub fn main() {
             height: 50.0,
             radius: 0.0,
         })
+        .with(Collision {
+            collision_shape: Box::new(parry2d::shape::Cuboid::new(Vector2::new(25.0, 25.0))),
+        })
         .build();
 
     w.create_entity()
         .with(Physics {
-            world_space_position: Vector2::new(200.0, 0.0),
+            world_space_position: Vector2::new(200.0, 50.0),
             velocity: Vector2::new(0.0, 0.0),
             mass: 1.0,
             last_time_updated: Instant::now(),
@@ -77,6 +81,9 @@ pub fn main() {
             width: 50.0,
             height: 50.0,
             radius: 0.0,
+        })
+        .with(Collision {
+            collision_shape: Box::new(parry2d::shape::Cuboid::new(Vector2::new(25.0, 25.0))),
         })
         .build();
 

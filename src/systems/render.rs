@@ -28,10 +28,9 @@ impl<'a> System<'a> for SysRender {
         for (physics, drawable) in (&data.physics, &data.drawable).join() {
             match drawable.drawable_type {
                 DrawableType::Rectangle => {
-                    let center = physics.world_space_position;
                     let rect = sdl3::rect::Rect::new(
-                        center.x as i32,
-                        center.y as i32,
+                        (physics.world_space_position.x - drawable.width / 2.0) as i32,
+                        (physics.world_space_position.y - drawable.height / 2.0) as i32,
                         drawable.width as u32,
                         drawable.height as u32,
                     );

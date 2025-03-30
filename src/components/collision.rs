@@ -2,7 +2,7 @@ use parry2d::shape::Shape;
 use specs::prelude::*;
 
 pub struct Collision {
-    collision_shape: Box<dyn Shape>,
+    pub collision_shape: Box<dyn Shape>,
 }
 
 impl Component for Collision {
