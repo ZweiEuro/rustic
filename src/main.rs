@@ -27,7 +27,8 @@ pub fn create_game_objects(world: &mut World) {
         world,
         [50.0, 50.0],
         [50.0, 50.0],
-        Some([500.0, 0.0]),
+        None,
+        Some(500.0),
         Some(2.0),
         None,
     )
@@ -37,7 +38,8 @@ pub fn create_game_objects(world: &mut World) {
         world,
         [200.0, 50.0],
         [50.0, 50.0],
-        Some([0.0, 0.0]),
+        Some([1.0, 0.0]),
+        None,
         None,
         None,
     )
@@ -49,6 +51,7 @@ pub fn create_game_objects(world: &mut World) {
         [10.0, 50.0],
         [10.0, 200.0],
         None,
+        None,
         Some(INFINITY),
         Some(Color::RGB(0, 0, 0)),
     )
@@ -58,6 +61,7 @@ pub fn create_game_objects(world: &mut World) {
         world,
         [500.0, 50.0],
         [10.0, 200.0],
+        None,
         None,
         Some(INFINITY),
         Some(Color::RGB(0, 0, 0)),
@@ -115,7 +119,7 @@ pub fn main() {
         dispatcher.dispatch(&w);
         w.maintain();
 
-        if (w.read_resource::<SysState>().running == false) {
+        if w.read_resource::<SysState>().running == false {
             break 'running;
         }
 

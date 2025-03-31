@@ -20,7 +20,13 @@ impl<'a> System<'a> for SysMovement {
 
             physics.last_time_updated = Instant::now();
 
-            physics.world_space_position += physics.velocity * time_delta.as_secs_f32();
+            physics.world_space_position +=
+                physics.direction * physics.speed * time_delta.as_secs_f32();
+
+            assert!(
+                physics.world_space_position.x.is_finite()
+                    && physics.world_space_position.y.is_finite()
+            );
         }
     }
 }

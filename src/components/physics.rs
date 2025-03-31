@@ -7,7 +7,15 @@ use specs::prelude::*;
 #[derive(Debug, Clone)]
 pub struct Physics {
     pub world_space_position: Vector2<f32>,
-    pub velocity: Vector2<f32>,
+
+    /// directional vector of the object
+    /// denoting "forward"
+    pub direction: Vector2<f32>,
+
+    /// speed of the object
+    /// functionally a scalar of the direction vector
+    pub speed: f32,
+
     pub mass: f32,
 
     // system needed info

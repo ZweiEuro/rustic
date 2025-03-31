@@ -10,7 +10,8 @@ pub fn create_rect(
     world: &mut World,
     position: [f32; 2],
     dimensions: [f32; 2],
-    velocity: Option<[f32; 2]>,
+    direction: Option<[f32; 2]>,
+    speed: Option<f32>,
     mass: Option<f32>,
     color: Option<Color>,
 ) -> EntityBuilder {
@@ -18,7 +19,8 @@ pub fn create_rect(
         .create_entity()
         .with(Physics {
             world_space_position: Vector2::new(position[0], position[1]),
-            velocity: velocity.map_or(Vector2::new(0.0, 0.0), |v| Vector2::new(v[0], v[1])),
+            direction: direction.map_or(Vector2::new(1.0, 0.0), |v| Vector2::new(v[0], v[1])),
+            speed: speed.unwrap_or(0.0),
             mass: mass.unwrap_or(1.0),
             last_time_updated: Instant::now(),
         })
@@ -42,7 +44,8 @@ pub fn create_player(world: &mut World) -> Entity {
         world,
         [400.0, 400.0],
         [50.0, 50.0],
-        Some([0.0, 0.0]),
+        None,
+        None,
         Some(10.0),
         Some(Color::RGB(0, 255, 0)),
     )
@@ -53,7 +56,6 @@ pub fn create_player(world: &mut World) -> Entity {
             if ev.is_keyboard() == false {
                 return false;
             }
-            print!("Key event {:?}\n", ev);
 
             let keyup;
 
@@ -78,25 +80,29 @@ pub fn create_player(world: &mut World) -> Entity {
             }
 
             // calc new velocity
-            let mut new_velocity = Vector2::new(0.0, 0.0);
+            let mut new_direction_vector = Vector2::new(0.0, 0.0);
 
             if s.pressed_relevant_keys.contains(&Keycode::W) {
-                new_velocity.y -= s.directional_velocity;
+                new_direction_vector += Vector2::new(0.0, -1.0);
             }
 
             if s.pressed_relevant_keys.contains(&Keycode::A) {
-                new_velocity.x -= s.directional_velocity;
+                new_direction_vector += Vector2::new(-1.0, 0.0);
             }
 
             if s.pressed_relevant_keys.contains(&Keycode::S) {
-                new_velocity.y += s.directional_velocity;
+                new_direction_vector += Vector2::new(0.0, 1.0);
             }
 
             if s.pressed_relevant_keys.contains(&Keycode::D) {
-                new_velocity.x += s.directional_velocity;
+                new_direction_vector += Vector2::new(1.0, 0.0);
             }
 
-            p.velocity = new_velocity;
+            p.direction = new_direction_vector;
+
+            if p.direction.magnitude() != 0.0 {
+                p.speed = 500.0;
+            }
 
             return true;
         },
