@@ -4,7 +4,7 @@ use parry2d::na::Vector2;
 use specs::Component;
 use specs::prelude::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Physics {
     pub world_space_position: Vector2<f32>,
 

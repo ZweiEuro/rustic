@@ -26,13 +26,13 @@ impl<'a> System<'a> for SysRender {
         self.canvas.clear();
 
         for (physics, drawable) in (&data.physics, &data.drawable).join() {
-            match drawable.drawable_type {
-                DrawableType::Rectangle => {
+            match drawable.shape {
+                DrawableType::Rectangle { width, height } => {
                     let rect = sdl3::rect::Rect::new(
-                        (physics.world_space_position.x - drawable.width / 2.0) as i32,
-                        (physics.world_space_position.y - drawable.height / 2.0) as i32,
-                        drawable.width as u32,
-                        drawable.height as u32,
+                        (physics.world_space_position.x - width / 2.0) as i32,
+                        (physics.world_space_position.y - height / 2.0) as i32,
+                        width as u32,
+                        height as u32,
                     );
 
                     self.canvas.set_draw_color(drawable.color);
@@ -40,7 +40,7 @@ impl<'a> System<'a> for SysRender {
                     self.canvas.set_draw_color(drawable.color);
                     self.canvas.draw_rect(rect.into()).unwrap();
                 }
-                DrawableType::Circle => {
+                DrawableType::Circle { radius } => {
                     todo!("Implement the circle drawing")
                 }
             }

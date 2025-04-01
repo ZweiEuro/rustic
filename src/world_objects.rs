@@ -1,10 +1,12 @@
 use std::{any::Any, time::Instant};
 
-use parry2d::na::Vector2;
+use parry2d::{either::IntoEither, na::Vector2};
 use sdl3::{event::Event, keyboard::Keycode, libc::printf, pixels::Color};
 use specs::prelude::*;
 
-use crate::components::{Collision, Drawable, DrawableType, InputMovement, Physics, PressedKeys};
+use crate::components::{
+    Collision, Drawable, DrawableType, KeyboardHandling, Physics, PressedKeys,
+};
 
 pub fn create_rect(
     world: &mut World,
@@ -25,11 +27,11 @@ pub fn create_rect(
             last_time_updated: Instant::now(),
         })
         .with(Drawable {
-            drawable_type: DrawableType::Rectangle,
+            shape: DrawableType::Rectangle {
+                width: dimensions[0],
+                height: dimensions[1],
+            },
             color: color.unwrap_or(Color::RGB(255, 0, 0)),
-            width: dimensions[0],
-            height: dimensions[1],
-            radius: 0.0,
         })
         .with(Collision {
             collision_shape: Box::new(parry2d::shape::Cuboid::new(Vector2::new(
@@ -40,23 +42,10 @@ pub fn create_rect(
 }
 
 pub fn create_player(world: &mut World) -> Entity {
-    create_rect(
-        world,
-        [400.0, 400.0],
-        [50.0, 50.0],
-        None,
-        None,
-        Some(10.0),
-        Some(Color::RGB(0, 255, 0)),
-    )
-    .with(InputMovement {
-        handler: |ev: Event, p: &mut Physics, s: &mut InputMovement| {
-            let relevant = vec![Keycode::W, Keycode::A, Keycode::S, Keycode::D];
+    let handler = |ev: Event, p: &mut Physics, s: &mut KeyboardHandling| {
+        let relevant = vec![Keycode::W, Keycode::A, Keycode::S, Keycode::D];
 
-            if ev.is_keyboard() == false {
-                return false;
-            }
-
+        if ev.is_keyboard() {
             let keyup;
 
             let keycode = match ev {
@@ -101,11 +90,25 @@ pub fn create_player(world: &mut World) -> Entity {
             p.direction = new_direction_vector;
 
             if p.direction.magnitude() != 0.0 {
-                p.speed = 500.0;
+                p.speed = s.directional_velocity;
             }
-
             return true;
-        },
+        }
+
+        return false;
+    };
+
+    create_rect(
+        world,
+        [400.0, 400.0],
+        [50.0, 50.0],
+        None,
+        None,
+        Some(10.0),
+        Some(Color::RGB(0, 255, 0)),
+    )
+    .with(KeyboardHandling {
+        handler,
         pressed_relevant_keys: PressedKeys::new(),
         directional_velocity: 500.0,
     })

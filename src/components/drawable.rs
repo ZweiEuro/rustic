@@ -4,20 +4,13 @@ use specs::prelude::*;
 
 #[derive(Debug, Clone)]
 pub enum DrawableType {
-    Rectangle,
-    Circle,
+    Rectangle { width: f32, height: f32 },
+    Circle { radius: f32 },
 }
 
 pub struct Drawable {
-    pub drawable_type: DrawableType,
+    pub shape: DrawableType,
     pub color: Color,
-
-    // Rectangle
-    pub width: f32,
-    pub height: f32,
-
-    // Circle
-    pub radius: f32,
 }
 
 impl Component for Drawable {

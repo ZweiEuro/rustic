@@ -1,16 +1,11 @@
 extern crate sdl3;
 
-use components::{Collision, Drawable, DrawableType, Physics};
-
-use parry2d::na::Vector2;
-use sdl3::event::Event;
-use sdl3::keyboard::Keycode;
 use sdl3::pixels::Color;
 use specs::DispatcherBuilder;
-use specs::{prelude::*, storage::HashMapStorage};
+use specs::prelude::*;
 use std::f32::INFINITY;
-use std::thread::Thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use systems::SysSpawner;
 use systems::{SysCollision, SysInput, SysMovement, SysRender};
 use world_objects::{create_player, create_rect};
 
@@ -104,6 +99,7 @@ pub fn main() {
             "input",
             &[],
         )
+        .with(SysSpawner, "spawner", &["input"])
         .with_thread_local(SysRender {
             canvas: window.into_canvas(),
         });
