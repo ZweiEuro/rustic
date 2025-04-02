@@ -4,8 +4,8 @@ mod keyboard_handling;
 mod physics;
 mod spawn_properties;
 
-pub use collision::Collision;
-pub use drawable::{Drawable, DrawableType};
+pub use collision::CollisionComp;
+pub use drawable::DrawableComp;
 pub use keyboard_handling::{KeyboardHandling, PressedKeys};
-pub use physics::Physics;
-pub use spawn_properties::{SpawnInformation, SpawnProperties};
+pub use physics::{Physics, PhysicsComp, Shape};
+pub use spawn_properties::{SpawnInformation, SpawnProperties_comp};

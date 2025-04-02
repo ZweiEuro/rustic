@@ -1,22 +1,18 @@
 use std::time::Instant;
 
-use parry2d::{math::Vector, na::Vector2};
-use sdl3::{
-    EventPump, event::Event, keyboard::Keycode, libc::printf, mouse::MouseButton, pixels::Color,
-};
+use parry2d::na::Vector2;
+use sdl3::{EventPump, event::Event, keyboard::Keycode, mouse::MouseButton, pixels::Color};
 use specs::prelude::*;
 
 use crate::{
     SysState,
-    components::{
-        Collision, Drawable, KeyboardHandling, Physics, SpawnInformation, SpawnProperties,
-    },
+    components::{KeyboardHandling, Physics, PhysicsComp, SpawnInformation, SpawnProperties_comp},
 };
 
 #[derive(SystemData)]
-pub struct InputComp<'a> {
+pub struct Data<'a> {
     sys_state: Write<'a, SysState>,
-    physics: WriteStorage<'a, Physics>,
+    physics: WriteStorage<'a, PhysicsComp>,
     move_handler: WriteStorage<'a, KeyboardHandling>,
 }
 
@@ -30,8 +26,8 @@ unsafe impl Send for SysInput {}
 impl<'a> System<'a> for SysInput {
     type SystemData = (
         Entities<'a>,
-        WriteStorage<'a, SpawnProperties>,
-        InputComp<'a>,
+        WriteStorage<'a, SpawnProperties_comp>,
+        Data<'a>,
     );
 
     fn run(&mut self, (entities, mut spawn_properties, mut data): Self::SystemData) {
@@ -72,14 +68,17 @@ impl<'a> System<'a> for SysInput {
                         spawn_properties
                             .insert(
                                 bullet,
-                                SpawnProperties::new({
+                                SpawnProperties_comp::new({
                                     SpawnInformation::Bullet {
                                         physics: Physics {
                                             world_space_position: Vector2::new(x as f32, y as f32),
                                             direction: Vector2::new(1.0, 0.0),
                                             speed: 100.0,
                                             mass: 1.0,
-                                            last_time_updated: Instant::now(),
+                                            shape: crate::components::Shape::Rectangle {
+                                                width: 50.0,
+                                                height: 50.0,
+                                            },
                                         },
                                         color: Color::RGB(0, 0, 255),
                                     }

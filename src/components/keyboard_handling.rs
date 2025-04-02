@@ -4,7 +4,7 @@ use sdl3::event::Event;
 use specs::Component;
 use specs::prelude::*;
 
-use super::Physics;
+use super::PhysicsComp;
 
 pub type PressedKeys = HashSet<sdl3::keyboard::Keycode>;
 
@@ -14,7 +14,7 @@ pub type PressedKeys = HashSet<sdl3::keyboard::Keycode>;
 #[derive(Debug, Clone)]
 pub struct KeyboardHandling {
     /// Handler, return true if even was consumed
-    pub handler: fn(ev: Event, p: &mut Physics, r: &mut KeyboardHandling) -> bool,
+    pub handler: fn(ev: Event, p: &mut PhysicsComp, r: &mut KeyboardHandling) -> bool,
 
     pub pressed_relevant_keys: PressedKeys,
 

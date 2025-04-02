@@ -89,7 +89,7 @@ pub fn main() {
 
     // Register systems
 
-    let mut dispatcher_builder = DispatcherBuilder::new()
+    let dispatcher_builder = DispatcherBuilder::new()
         .with(SysMovement, "movement", &[])
         .with(SysCollision, "collision", &[])
         .with(

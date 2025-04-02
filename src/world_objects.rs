@@ -1,11 +1,9 @@
-use std::{any::Any, time::Instant};
-
-use parry2d::{either::IntoEither, na::Vector2};
-use sdl3::{event::Event, keyboard::Keycode, libc::printf, pixels::Color};
+use parry2d::na::Vector2;
+use sdl3::{event::Event, keyboard::Keycode, pixels::Color};
 use specs::prelude::*;
 
 use crate::components::{
-    Collision, Drawable, DrawableType, KeyboardHandling, Physics, PressedKeys,
+    CollisionComp, DrawableComp, KeyboardHandling, Physics, PhysicsComp, PressedKeys, Shape,
 };
 
 pub fn create_rect(
@@ -17,32 +15,31 @@ pub fn create_rect(
     mass: Option<f32>,
     color: Option<Color>,
 ) -> EntityBuilder {
+    let physics = Physics {
+        world_space_position: Vector2::new(position[0], position[1]),
+        direction: direction.map_or(Vector2::new(1.0, 0.0), |v| Vector2::new(v[0], v[1])),
+        speed: speed.unwrap_or(0.0),
+        mass: mass.unwrap_or(1.0),
+        shape: Shape::Rectangle {
+            width: dimensions[0],
+            height: dimensions[1],
+        },
+    };
+
+    let mut drawable: DrawableComp = physics.into();
+    drawable.color = color.unwrap_or(drawable.color);
+
+    let coll: CollisionComp = physics.into();
+
     world
         .create_entity()
-        .with(Physics {
-            world_space_position: Vector2::new(position[0], position[1]),
-            direction: direction.map_or(Vector2::new(1.0, 0.0), |v| Vector2::new(v[0], v[1])),
-            speed: speed.unwrap_or(0.0),
-            mass: mass.unwrap_or(1.0),
-            last_time_updated: Instant::now(),
-        })
-        .with(Drawable {
-            shape: DrawableType::Rectangle {
-                width: dimensions[0],
-                height: dimensions[1],
-            },
-            color: color.unwrap_or(Color::RGB(255, 0, 0)),
-        })
-        .with(Collision {
-            collision_shape: Box::new(parry2d::shape::Cuboid::new(Vector2::new(
-                dimensions[0] / 2.0,
-                dimensions[1] / 2.0,
-            ))),
-        })
+        .with(PhysicsComp::new(physics))
+        .with(drawable)
+        .with(coll)
 }
 
 pub fn create_player(world: &mut World) -> Entity {
-    let handler = |ev: Event, p: &mut Physics, s: &mut KeyboardHandling| {
+    let handler = |ev: Event, p: &mut PhysicsComp, s: &mut KeyboardHandling| {
         let relevant = vec![Keycode::W, Keycode::A, Keycode::S, Keycode::D];
 
         if ev.is_keyboard() {
@@ -87,10 +84,10 @@ pub fn create_player(world: &mut World) -> Entity {
                 new_direction_vector += Vector2::new(1.0, 0.0);
             }
 
-            p.direction = new_direction_vector;
+            p.physics.direction = new_direction_vector;
 
-            if p.direction.magnitude() != 0.0 {
-                p.speed = s.directional_velocity;
+            if p.physics.direction.magnitude() != 0.0 {
+                p.physics.speed = s.directional_velocity;
             }
             return true;
         }
