@@ -1,5 +1,7 @@
 extern crate sdl3;
 
+use parry2d::na::Vector2;
+use parry2d::na::Vector3;
 use sdl3::pixels::Color;
 use specs::DispatcherBuilder;
 use specs::prelude::*;
@@ -63,17 +65,26 @@ pub fn create_game_objects(world: &mut World) {
     )
     .build();
 
-    create_player(world);
+    let player = create_player(world);
+
+    world.insert(PlayerEntity {
+        entity: Some(player),
+    });
 }
 
 #[derive(Default)]
 pub struct SysState {
     running: bool,
 }
+#[derive(Default)]
+
+pub struct PlayerEntity {
+    entity: Option<Entity>,
+}
 
 pub fn main() {
     print!("Hello, world!\n");
-    let mut w = World::new();
+    let mut world = World::new();
 
     // SDL stuff
 
@@ -104,18 +115,18 @@ pub fn main() {
             canvas: window.into_canvas(),
         });
 
-    w.insert(SysState { running: true });
+    world.insert(SysState { running: true });
 
     let mut dispatcher = dispatcher_builder.build();
-    dispatcher.setup(&mut w);
+    dispatcher.setup(&mut world);
 
-    create_game_objects(&mut w);
+    create_game_objects(&mut world);
 
     'running: loop {
-        dispatcher.dispatch(&w);
-        w.maintain();
+        dispatcher.dispatch(&world);
+        world.maintain();
 
-        if w.read_resource::<SysState>().running == false {
+        if world.read_resource::<SysState>().running == false {
             break 'running;
         }
 

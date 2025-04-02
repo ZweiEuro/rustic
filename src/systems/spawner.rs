@@ -54,7 +54,7 @@ impl<'a> System<'a> for SysSpawner {
                 _ => todo!("property not set to spawn yet"),
             }
 
-            print!("spawning obj {:?}\n", spawner_props);
+            spawnerprops_comps.remove(entity);
         }
     }
 }

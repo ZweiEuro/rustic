@@ -1,3 +1,5 @@
+use std::f32::INFINITY;
+
 use parry2d::na::Vector2;
 use sdl3::{event::Event, keyboard::Keycode, pixels::Color};
 use specs::prelude::*;

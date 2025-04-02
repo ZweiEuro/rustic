@@ -1,18 +1,15 @@
-use std::time::Instant;
-
 use parry2d::na::Vector2;
 use sdl3::{EventPump, event::Event, keyboard::Keycode, mouse::MouseButton, pixels::Color};
 use specs::prelude::*;
 
 use crate::{
-    SysState,
+    PlayerEntity, SysState,
     components::{KeyboardHandling, Physics, PhysicsComp, SpawnInformation, SpawnProperties_comp},
 };
 
 #[derive(SystemData)]
 pub struct Data<'a> {
     sys_state: Write<'a, SysState>,
-    physics: WriteStorage<'a, PhysicsComp>,
     move_handler: WriteStorage<'a, KeyboardHandling>,
 }
 
@@ -25,12 +22,23 @@ unsafe impl Send for SysInput {}
 
 impl<'a> System<'a> for SysInput {
     type SystemData = (
-        Entities<'a>,
-        WriteStorage<'a, SpawnProperties_comp>,
-        Data<'a>,
+        Read<'a, PlayerEntity>,                 // resource
+        Entities<'a>,                           // base
+        WriteStorage<'a, SpawnProperties_comp>, // component
+        WriteStorage<'a, PhysicsComp>,          // component
+        Data<'a>,                               // actual data
     );
 
-    fn run(&mut self, (entities, mut spawn_properties, mut data): Self::SystemData) {
+    fn run(
+        &mut self,
+        (
+            player_entity,
+            entities,
+            mut spawn_properties_components,
+            mut physics_components,
+            mut data,
+        ): Self::SystemData,
+    ) {
         let mut sys_state = data.sys_state;
 
         for event in self.event_pump.poll_iter() {
@@ -45,9 +53,11 @@ impl<'a> System<'a> for SysInput {
                 _ => {}
             }
 
-            for obj in (&mut data.physics, &mut data.move_handler).join() {
-                if (obj.1.handler)(event.clone(), obj.0, obj.1) == true {
-                    break;
+            for obj in (&entities, &mut data.move_handler).join() {
+                if let Some(ph) = physics_components.get_mut(obj.0) {
+                    if (obj.1.handler)(event.clone(), ph, obj.1) == true {
+                        break;
+                    }
                 }
             }
 
@@ -61,23 +71,37 @@ impl<'a> System<'a> for SysInput {
                             continue;
                         }
 
-                        print!("Mouse button down at: x: {}, y: {}\n", x, y);
+                        if player_entity.entity.is_none() {
+                            print!("no player to spawn anything on click");
+                            continue;
+                        }
+
+                        let click_pos = Vector2::new(x, y);
+
+                        let player_entity = player_entity.entity.unwrap();
+                        let player_physics = physics_components.get(player_entity).unwrap();
+
+                        let bullet_direction =
+                            (click_pos - player_physics.physics.world_space_position).normalize();
+
+                        let bullet_spawn_pos =
+                            player_physics.physics.world_space_position + bullet_direction * 100.0;
 
                         let bullet = entities.create();
 
-                        spawn_properties
+                        spawn_properties_components
                             .insert(
                                 bullet,
                                 SpawnProperties_comp::new({
                                     SpawnInformation::Bullet {
                                         physics: Physics {
-                                            world_space_position: Vector2::new(x as f32, y as f32),
-                                            direction: Vector2::new(1.0, 0.0),
-                                            speed: 100.0,
-                                            mass: 1.0,
+                                            world_space_position: bullet_spawn_pos,
+                                            direction: bullet_direction,
+                                            speed: 200.0,
+                                            mass: 0.001,
                                             shape: crate::components::Shape::Rectangle {
-                                                width: 50.0,
-                                                height: 50.0,
+                                                width: 5.0,
+                                                height: 5.0,
                                             },
                                         },
                                         color: Color::RGB(0, 0, 255),
@@ -85,8 +109,6 @@ impl<'a> System<'a> for SysInput {
                                 }),
                             )
                             .unwrap();
-
-                        print!("created entity {:?}\n", bullet)
                     }
                     _ => {}
                 }
