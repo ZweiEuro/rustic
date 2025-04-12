@@ -1,5 +1,7 @@
 extern crate sdl3;
 
+use components::CollisionComp;
+use components::EntityType;
 use sdl3::pixels::Color;
 use specs::DispatcherBuilder;
 use specs::prelude::*;
@@ -19,6 +21,11 @@ use std::thread;
 static MAIN_LOOP_FPS: i32 = 120;
 
 pub fn create_game_objects(world: &mut World) {
+    let coll: CollisionComp = CollisionComp {
+        collides_with: EntityType::all_bits(),
+        my_collision_type: EntityType::Enemy,
+    };
+
     create_rect(
         world,
         [50.0, 50.0],
@@ -28,7 +35,13 @@ pub fn create_game_objects(world: &mut World) {
         Some(2.0),
         None,
     )
+    .with(coll)
     .build();
+
+    let coll: CollisionComp = CollisionComp {
+        collides_with: EntityType::all_bits(),
+        my_collision_type: EntityType::Enemy,
+    };
 
     create_rect(
         world,
@@ -39,9 +52,15 @@ pub fn create_game_objects(world: &mut World) {
         None,
         None,
     )
+    .with(coll)
     .build();
 
     // world boundary
+    let coll: CollisionComp = CollisionComp {
+        collides_with: EntityType::all_bits(),
+        my_collision_type: EntityType::Wall,
+    };
+
     create_rect(
         world,
         [10.0, 50.0],
@@ -51,7 +70,13 @@ pub fn create_game_objects(world: &mut World) {
         Some(INFINITY),
         Some(Color::RGB(0, 0, 0)),
     )
+    .with(coll)
     .build();
+
+    let coll: CollisionComp = CollisionComp {
+        collides_with: EntityType::all_bits(),
+        my_collision_type: EntityType::Wall,
+    };
 
     create_rect(
         world,
@@ -62,6 +87,7 @@ pub fn create_game_objects(world: &mut World) {
         Some(INFINITY),
         Some(Color::RGB(0, 0, 0)),
     )
+    .with(coll)
     .build();
 
     let player = create_player(world);

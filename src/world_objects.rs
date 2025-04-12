@@ -32,16 +32,10 @@ pub fn create_rect(
     let mut drawable: DrawableComp = physics.into();
     drawable.color = color.unwrap_or(drawable.color);
 
-    let coll: CollisionComp = CollisionComp {
-        collides_with: EntityType::all_bits(),
-        my_collision_type: EntityType::Enemy,
-    };
-
     world
         .create_entity()
         .with(PhysicsComp::new(physics))
         .with(drawable)
-        .with(coll)
 }
 
 pub fn create_player(world: &mut World) -> Entity {

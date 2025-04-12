@@ -9,6 +9,7 @@ pub enum EntityType {
     EnemyBullet,
     Player,
     PlayerBullet,
+    Wall,
 }
 
 pub struct CollisionComp {

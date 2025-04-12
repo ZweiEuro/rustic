@@ -16,6 +16,7 @@ pub struct Data<'a> {
 
 pub struct SysCollision;
 
+// broad phase of collision detection
 impl<'a> System<'a> for SysCollision {
     type SystemData = (Entities<'a>, WriteStorage<'a, CollisionResData>, Data<'a>);
 
@@ -48,7 +49,7 @@ impl<'a> System<'a> for SysCollision {
                     .intersects(object_b.2.my_collision_type)
                     == false
                 {
-                    // we should not intersect
+                    // we should not check for intersect
                     continue;
                 }
 
