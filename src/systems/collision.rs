@@ -2,7 +2,7 @@ use std::{ops::Deref, time::Instant};
 
 use parry2d::{
     na::{Isometry2, Vector2},
-    query::intersection_test,
+    query::{self, intersection_test},
 };
 use specs::prelude::*;
 
@@ -73,22 +73,26 @@ impl<'a> System<'a> for SysCollision {
                     _ => panic!("unknown shape!"),
                 };
 
+                let prediction = 1.0;
+
                 // do the actual collision check
-                let res = intersection_test(
+                let res = query::contact(
                     &Isometry2::new(object_a.1.physics.world_space_position, 0.),
                     coll_a.deref(),
                     &Isometry2::new(object_b.1.physics.world_space_position, 0.),
                     coll_b.deref(),
+                    prediction,
                 )
                 .unwrap();
 
-                if res {
+                if let Some(contact) = res {
                     collisionDataComp
                         .insert(
                             object_a.0,
                             CollisionResData {
                                 other: object_b.0,
                                 time_of_collision: Instant::now(),
+                                contact,
                             },
                         )
                         .unwrap();

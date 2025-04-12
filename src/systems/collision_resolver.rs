@@ -1,6 +1,8 @@
+use std::mem;
+
 use specs::prelude::*;
 
-use crate::components::{CollisionComp, CollisionResData, EntityType};
+use crate::components::{CollisionComp, CollisionResData, EntityType, PhysicsComp};
 
 pub struct SysCollisionResolver;
 
@@ -9,43 +11,54 @@ impl<'a> System<'a> for SysCollisionResolver {
         Entities<'a>,
         WriteStorage<'a, CollisionResData>,
         ReadStorage<'a, CollisionComp>,
+        WriteStorage<'a, PhysicsComp>,
     );
 
     fn run(
         &mut self,
-        (entities, mut collision_res_component, mut collision_component): Self::SystemData,
+        (entities, mut collision_res_components,  collision_components, mut physics_components): Self::SystemData,
     ) {
         for entity in (&*entities).join() {
-            let t = collision_res_component.get_mut(entity);
+            let collision_resolution_info = collision_res_components.get(entity);
 
-            if t.is_none() {
+            if collision_resolution_info.is_none() {
                 continue;
             }
 
-            let t = t.unwrap();
+            let collision_resolution_info = collision_resolution_info.unwrap().clone();
 
-            let entity_a = entity;
-            let entity_b = t.other;
+            collision_res_components.remove(entity);
 
-            let mut collision_components = [
-                collision_component.get(entity_a).unwrap(),
-                collision_component.get(entity_b).unwrap(),
-            ];
+            let mut entity_a = entity;
+            let mut entity_b = collision_resolution_info.other;
 
-            collision_components.sort_by(|a, b| a.my_collision_type.cmp(&b.my_collision_type));
+            {
+                // safety check both are still live and sorted correctly
 
-            let entity_a_col = collision_components[0];
-            let entity_b_col = collision_components[1];
+                if collision_components.get(entity_a).is_none()
+                    || collision_components.get(entity_b).is_none()
+                {
+                    // objects got deleted or does not have a proper collision component anymore
+                    continue;
+                }
+
+                let entity_a_col = collision_components.get(entity_a).unwrap();
+                let entity_b_col = collision_components.get(entity_b).unwrap();
+
+                // make a always be the smaller one
+                if entity_a_col.my_collision_type > entity_b_col.my_collision_type {
+                    mem::swap(&mut entity_a, &mut entity_b);
+                }
+            }
+
+            // make them immutable after this point
+            let entity_a = entity_a;
+            let entity_b = entity_b;
+
+            let entity_a_col = collision_components.get(entity_a).unwrap();
+            let entity_b_col = collision_components.get(entity_b).unwrap();
 
             // the order of these will always be constant
-            match entity_b_col.my_collision_type {
-                EntityType::Enemy => {}
-                EntityType::EnemyBullet => {}
-                EntityType::Player => {}
-                EntityType::PlayerBullet => {}
-                EntityType::Wall => {}
-                _ => panic!("unknown entity type "),
-            }
 
             match entity_a_col.my_collision_type {
                 EntityType::Enemy => match entity_b_col.my_collision_type {
@@ -56,7 +69,12 @@ impl<'a> System<'a> for SysCollisionResolver {
                         print!("damage enem\ny")
                     }
                     EntityType::Wall => {
-                        print!("collide enemy with wall\n");
+                        let physics = &mut physics_components.get_mut(entity_a).unwrap();
+
+                        let collision_direction = physics.physics.direction;
+
+                        physics.physics.world_space_position -=
+                            collision_direction * collision_resolution_info.contact.dist.abs();
                     }
                     _ => panic!("should never occur"),
                 },
@@ -64,7 +82,7 @@ impl<'a> System<'a> for SysCollisionResolver {
                     EntityType::EnemyBullet => {}
                     EntityType::Player => {
                         print!("damage player\n");
-                        entities.delete(entity_a).unwrap();
+                        entities.delete(entity_a).unwrap()
                     }
                     EntityType::PlayerBullet => {}
                     EntityType::Wall => {
@@ -78,6 +96,13 @@ impl<'a> System<'a> for SysCollisionResolver {
                     EntityType::PlayerBullet => {}
                     EntityType::Wall => {
                         print!("collide player with wall\n");
+
+                        let physics = &mut physics_components.get_mut(entity_a).unwrap();
+
+                        let collision_direction = physics.physics.direction;
+
+                        physics.physics.world_space_position -=
+                            collision_direction * collision_resolution_info.contact.dist.abs();
                     }
                     _ => panic!("should never occur"),
                 },
@@ -97,8 +122,6 @@ impl<'a> System<'a> for SysCollisionResolver {
                 },
                 _ => panic!("should never occur"),
             }
-
-            collision_res_component.remove(entity);
         }
     }
 }

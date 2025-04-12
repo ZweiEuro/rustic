@@ -95,6 +95,11 @@ pub fn create_player(world: &mut World) -> Entity {
         return false;
     };
 
+    let coll: CollisionComp = CollisionComp {
+        collides_with: EntityType::all_bits(),
+        my_collision_type: EntityType::Player,
+    };
+
     create_rect(
         world,
         [400.0, 400.0],
@@ -109,5 +114,6 @@ pub fn create_player(world: &mut World) -> Entity {
         pressed_relevant_keys: PressedKeys::new(),
         directional_velocity: 500.0,
     })
+    .with(coll)
     .build()
 }
