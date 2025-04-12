@@ -5,7 +5,8 @@ use sdl3::{event::Event, keyboard::Keycode, pixels::Color};
 use specs::prelude::*;
 
 use crate::components::{
-    CollisionComp, DrawableComp, KeyboardHandling, Physics, PhysicsComp, PressedKeys, Shape,
+    CollisionComp, DrawableComp, EntityType, KeyboardHandling, Physics, PhysicsComp, PressedKeys,
+    Shape,
 };
 
 pub fn create_rect(
@@ -31,7 +32,10 @@ pub fn create_rect(
     let mut drawable: DrawableComp = physics.into();
     drawable.color = color.unwrap_or(drawable.color);
 
-    let coll: CollisionComp = physics.into();
+    let coll: CollisionComp = CollisionComp {
+        collides_with: EntityType::all_bits(),
+        my_collision_type: EntityType::Enemy,
+    };
 
     world
         .create_entity()

@@ -32,22 +32,6 @@ pub struct Physics {
     pub shape: Shape,
 }
 
-impl Into<CollisionComp> for Physics {
-    fn into(self) -> CollisionComp {
-        CollisionComp {
-            collision_shape: match self.shape {
-                Shape::Rectangle { width, height } => Box::new(parry2d::shape::Cuboid::new(
-                    Vector2::new(width / 2.0, height / 2.0),
-                )),
-
-                Shape::Circle { radius } => Box::new(parry2d::shape::Ball::new(radius)),
-
-                _ => panic!(),
-            },
-        }
-    }
-}
-
 impl Into<DrawableComp> for Physics {
     fn into(self) -> DrawableComp {
         DrawableComp {

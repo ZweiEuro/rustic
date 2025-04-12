@@ -4,7 +4,9 @@ use specs::prelude::*;
 
 use crate::{
     PlayerEntity, SysState,
-    components::{KeyboardHandling, Physics, PhysicsComp, SpawnInformation, SpawnProperties_comp},
+    components::{
+        EntityType, KeyboardHandling, Physics, PhysicsComp, SpawnInformation, SpawnProperties_comp,
+    },
 };
 
 #[derive(SystemData)]
@@ -93,8 +95,9 @@ impl<'a> System<'a> for SysInput {
                             .insert(
                                 bullet,
                                 SpawnProperties_comp::new({
-                                    SpawnInformation::Bullet {
-                                        physics: Physics {
+                                    SpawnInformation {
+                                        entity_type: EntityType::PlayerBullet,
+                                        physics: Some(Physics {
                                             world_space_position: bullet_spawn_pos,
                                             direction: bullet_direction,
                                             speed: 200.0,
@@ -103,8 +106,8 @@ impl<'a> System<'a> for SysInput {
                                                 width: 5.0,
                                                 height: 5.0,
                                             },
-                                        },
-                                        color: Color::RGB(0, 0, 255),
+                                        }),
+                                        color: Some(Color::RGB(0, 0, 255)),
                                     }
                                 }),
                             )

@@ -1,12 +1,11 @@
 extern crate sdl3;
 
-use parry2d::na::Vector2;
-use parry2d::na::Vector3;
 use sdl3::pixels::Color;
 use specs::DispatcherBuilder;
 use specs::prelude::*;
 use std::f32::INFINITY;
 use std::time::Duration;
+use systems::SysCollisionResolver;
 use systems::SysSpawner;
 use systems::{SysCollision, SysInput, SysMovement, SysRender};
 use world_objects::{create_player, create_rect};
@@ -111,6 +110,7 @@ pub fn main() {
             &[],
         )
         .with(SysSpawner, "spawner", &["input"])
+        .with(SysCollisionResolver, "collision_resolver", &["collision"])
         .with_thread_local(SysRender {
             canvas: window.into_canvas(),
         });

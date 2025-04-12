@@ -1,12 +1,14 @@
 use sdl3::pixels::Color;
 use specs::prelude::*;
 
-use super::Physics;
+use super::{EntityType, Physics};
 
 #[derive(Debug)]
 
-pub enum SpawnInformation {
-    Bullet { physics: Physics, color: Color },
+pub struct SpawnInformation {
+    pub entity_type: EntityType,
+    pub physics: Option<Physics>,
+    pub color: Option<Color>,
 }
 
 #[derive(Debug)]

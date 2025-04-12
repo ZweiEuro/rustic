@@ -1,9 +1,12 @@
-use std::{f32::INFINITY, ops::Deref};
+use std::{ops::Deref, time::Instant};
 
-use parry2d::{na::Isometry2, query::intersection_test};
+use parry2d::{
+    na::{Isometry2, Vector2},
+    query::intersection_test,
+};
 use specs::prelude::*;
 
-use crate::components::{CollisionComp, PhysicsComp};
+use crate::components::{CollisionComp, CollisionResData, PhysicsComp, Shape};
 
 #[derive(SystemData)]
 pub struct Data<'a> {
@@ -14,79 +17,80 @@ pub struct Data<'a> {
 pub struct SysCollision;
 
 impl<'a> System<'a> for SysCollision {
-    type SystemData = Data<'a>;
+    type SystemData = (Entities<'a>, WriteStorage<'a, CollisionResData>, Data<'a>);
 
-    fn run(&mut self, mut data: Data) {
+    fn run(&mut self, (entities, mut collisionDataComp, mut data): Self::SystemData) {
         // check every entity against every other entity
 
-        let mut objects = (&mut data.physics, &data.collision)
+        let mut objects = (&*entities, &mut data.physics, &data.collision)
             .join()
             .collect::<Vec<_>>();
 
         'outer: for index_a in 0..objects.len() {
-            for index_comp in (index_a + 1)..objects.len() {
-                if index_a == index_comp {
+            for index_b in (index_a + 1)..objects.len() {
+                if index_a == index_b {
                     continue;
                 }
-                let a_pos = &objects[index_a].0.physics.world_space_position;
-                let b_pos = &objects[index_comp].0.physics.world_space_position;
 
+                // we have to do this with mutable splits else it wont know that they are editable at once
+                let (left, right) = objects.split_at_mut(index_b);
+
+                let left_len = left.len();
+
+                // get two mutable instances of the physics we are editing
+                let object_a = &mut (left.get_mut(index_a).unwrap());
+                let object_b = &mut (right.get_mut(index_b - left_len).unwrap());
+
+                // check the collision mask to check if they collide
+                if object_a
+                    .2
+                    .collides_with
+                    .intersects(object_b.2.my_collision_type)
+                    == false
+                {
+                    // we should not intersect
+                    continue;
+                }
+
+                // build both collision objects and then collide them
+
+                let coll_a: Box<dyn parry2d::shape::Shape> = match object_a.1.physics.shape {
+                    Shape::Rectangle { width, height } => Box::new(parry2d::shape::Cuboid::new(
+                        Vector2::new(width / 2.0, height / 2.0),
+                    )),
+                    Shape::Circle { radius } => Box::new(parry2d::shape::Ball::new(radius)),
+
+                    _ => panic!("unknown shape!"),
+                };
+
+                let coll_b: Box<dyn parry2d::shape::Shape> = match object_b.1.physics.shape {
+                    Shape::Rectangle { width, height } => Box::new(parry2d::shape::Cuboid::new(
+                        Vector2::new(width / 2.0, height / 2.0),
+                    )),
+                    Shape::Circle { radius } => Box::new(parry2d::shape::Ball::new(radius)),
+
+                    _ => panic!("unknown shape!"),
+                };
+
+                // do the actual collision check
                 let res = intersection_test(
-                    &Isometry2::new(*a_pos, 0.),
-                    objects[index_a].1.collision_shape.deref(),
-                    &Isometry2::new(*b_pos, 0.),
-                    objects[index_comp].1.collision_shape.deref(),
+                    &Isometry2::new(object_a.1.physics.world_space_position, 0.),
+                    coll_a.deref(),
+                    &Isometry2::new(object_b.1.physics.world_space_position, 0.),
+                    coll_b.deref(),
                 )
                 .unwrap();
 
                 if res {
-                    let (left, right) = objects.split_at_mut(index_comp);
-
-                    let left_len = left.len();
-
-                    // get two mutable instances of the physics we are editing
-                    let physics_a = &mut (left.get_mut(index_a).unwrap().0.physics);
-                    let physics_b = &mut (right.get_mut(index_comp - left_len).unwrap().0.physics);
-
-                    let m_a = physics_a.mass;
-                    let m_b = physics_b.mass;
-
-                    // if one of the objects has infinite mass, it is considered immovable
-                    // turn the other object around
-                    if m_a == INFINITY {
-                        physics_b.direction = -physics_b.direction;
-                        continue 'outer;
-                    } else if m_b == INFINITY {
-                        physics_a.direction = -physics_a.direction;
-                        continue 'outer;
-                    }
-
-                    let v_a = physics_b.direction * physics_b.speed;
-                    let v_b = physics_a.direction * physics_a.speed;
-
-                    let v_a_new = (v_a * (m_a - m_b) + 2. * m_b * v_b) / (m_a + m_b);
-                    let v_b_new = (v_b * (m_b - m_a) + 2. * m_a * v_a) / (m_a + m_b);
-
-                    // if the speed is 0, then the normalization will fail
-                    // the direction will just stay the way it was before the collision
-
-                    physics_b.speed = v_a_new.magnitude();
-
-                    if physics_b.speed != 0. {
-                        physics_b.direction = v_a_new.normalize();
-                    }
-
-                    assert!(physics_b.direction.x.is_finite() && physics_b.direction.y.is_finite());
-
-                    physics_a.speed = v_b_new.magnitude();
-
-                    if physics_a.speed != 0. {
-                        physics_a.direction = v_b_new.normalize();
-                    }
-
-                    assert!(physics_a.direction.x.is_finite() && physics_a.direction.y.is_finite());
-
-                    continue 'outer;
+                    collisionDataComp
+                        .insert(
+                            object_a.0,
+                            CollisionResData {
+                                other: object_b.0,
+                                time_of_collision: Instant::now(),
+                            },
+                        )
+                        .unwrap();
                 }
             }
         }

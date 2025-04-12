@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 parry2d= "0.18.0"
-
+bitmask-enum = "2.2.5"
 
 [dependencies.specs]
 version = "0.20.0"
