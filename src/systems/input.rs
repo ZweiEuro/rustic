@@ -100,7 +100,7 @@ impl<'a> System<'a> for SysInput {
                                         physics: Some(Physics {
                                             world_space_position: bullet_spawn_pos,
                                             direction: bullet_direction,
-                                            speed: 200.0,
+                                            speed: 600.0,
                                             mass: 0.001,
                                             shape: crate::components::Shape::Rectangle {
                                                 width: 5.0,

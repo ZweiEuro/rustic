@@ -48,10 +48,6 @@ impl<'a> System<'a> for SysCollisionResolver {
             let entity_a_col = collision_components.get(entity_a).unwrap();
             let entity_b_col = collision_components.get(entity_b).unwrap();
 
-            // physics stuff
-            let physics_a = physics_components.get(entity_a).unwrap();
-            let physics_b = physics_components.get(entity_a).unwrap();
-
             // the order of these will always be constant
 
             match entity_a_col.my_collision_type {
@@ -60,14 +56,23 @@ impl<'a> System<'a> for SysCollisionResolver {
                     EntityType::EnemyBullet => {}
                     EntityType::Player => {}
                     EntityType::PlayerBullet => {
-                        print!("damage enem\n")
+                        print!("damage enemy\n")
                     }
                     EntityType::Wall => {
                         let physics = &mut physics_components.get_mut(entity_a).unwrap();
 
-                        physics.physics.world_space_position -= collision_resolution_info
-                            .vec_to_other
-                            * collision_resolution_info.contact.dist.abs();
+                        let mut offfset_direction = collision_resolution_info.contact.point1
+                            - collision_resolution_info.contact.point2;
+
+                        if offfset_direction.x == 0.0 && offfset_direction.y == 0.0 {
+                            // this avoids a crash with a div by 0 error if the two points are exactly equal
+                            offfset_direction = [1.0, 0.0].into();
+                        }
+
+                        let offfset_direction = offfset_direction.normalize();
+
+                        physics.physics.world_space_position -=
+                            offfset_direction * collision_resolution_info.contact.dist.abs();
                     }
                     _ => panic!("should never occur"),
                 },
@@ -78,18 +83,13 @@ impl<'a> System<'a> for SysCollisionResolver {
                         entities.delete(entity_a).unwrap()
                     }
                     EntityType::PlayerBullet => {}
-                    EntityType::Wall => {
-                        print!("Delete e bullet hit wall\n");
-                        entities.delete(entity_a).unwrap()
-                    }
+                    EntityType::Wall => entities.delete(entity_a).unwrap(),
                     _ => panic!("should never occur"),
                 },
                 EntityType::Player => match entity_b_col.my_collision_type {
                     EntityType::Player => {}
                     EntityType::PlayerBullet => {}
                     EntityType::Wall => {
-                        print!("collide player with wall\n");
-
                         let physics = &mut physics_components.get_mut(entity_a).unwrap();
 
                         let mut offfset_direction = collision_resolution_info.contact.point1
@@ -109,10 +109,7 @@ impl<'a> System<'a> for SysCollisionResolver {
                 },
                 EntityType::PlayerBullet => match entity_b_col.my_collision_type {
                     EntityType::PlayerBullet => {}
-                    EntityType::Wall => {
-                        print!("Delete p bullet hit wall\n");
-                        entities.delete(entity_a).unwrap()
-                    }
+                    EntityType::Wall => entities.delete(entity_a).unwrap(),
                     _ => panic!("should never occur"),
                 },
                 EntityType::Wall => match entity_b_col.my_collision_type {

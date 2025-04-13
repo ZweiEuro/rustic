@@ -19,8 +19,6 @@ pub struct SysRender {
     pub canvas: sdl3::render::Canvas<sdl3::video::Window>,
 }
 
-const draw_direction: bool = true;
-
 impl<'a> System<'a> for SysRender {
     type SystemData = Data<'a>;
 
@@ -52,7 +50,8 @@ impl<'a> System<'a> for SysRender {
                 }
             }
 
-            if (draw_direction) {
+            #[cfg(feature = "dbg_draw_direction")]
+            if (DRAW_DIRECTION) {
                 let start = FPoint::new(
                     physics.physics.world_space_position.x,
                     physics.physics.world_space_position.y,

@@ -96,7 +96,7 @@ pub fn create_player(world: &mut World) -> Entity {
     };
 
     let coll: CollisionComp = CollisionComp {
-        collides_with: EntityType::all_bits(),
+        collides_with: EntityType::Wall,
         my_collision_type: EntityType::Player,
     };
 

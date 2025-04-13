@@ -4,6 +4,7 @@ use parry2d::{
     na::{Isometry2, Vector2},
     query::{self, Contact, intersection_test},
 };
+use sdl3::sys::assert;
 use specs::prelude::*;
 
 use crate::components::{CollisionComp, CollisionResData, PhysicsComp, Shape};
@@ -93,6 +94,9 @@ impl<'a> System<'a> for SysCollision {
                     .unwrap();
 
                     if let Some(contact) = res {
+                        // there should never be two collisions in the same pass
+                        assert!(collisionDataComp.get(object_b.0).is_none());
+
                         collisionDataComp
                             .insert(
                                 object_b.0,
@@ -118,6 +122,8 @@ impl<'a> System<'a> for SysCollision {
                     .unwrap();
 
                     if let Some(contact) = res {
+                        assert!(collisionDataComp.get(object_a.0).is_none());
+
                         collisionDataComp
                             .insert(
                                 object_a.0,

@@ -2,13 +2,11 @@ extern crate sdl3;
 
 use components::CollisionComp;
 use components::EntityType;
-use parry2d::query::Contact;
 use sdl3::pixels::Color;
 use specs::DispatcherBuilder;
 use specs::prelude::*;
 use std::f32::INFINITY;
 use std::time::Duration;
-use std::time::Instant;
 use systems::SysCollisionResolver;
 use systems::SysSpawner;
 use systems::{SysCollision, SysInput, SysMovement, SysRender};
@@ -24,7 +22,7 @@ static MAIN_LOOP_FPS: i32 = 120;
 
 pub fn create_game_objects(world: &mut World) {
     let coll: CollisionComp = CollisionComp {
-        collides_with: EntityType::all_bits(),
+        collides_with: EntityType::Wall,
         my_collision_type: EntityType::Enemy,
     };
 
@@ -41,7 +39,7 @@ pub fn create_game_objects(world: &mut World) {
     .build();
 
     let coll: CollisionComp = CollisionComp {
-        collides_with: EntityType::all_bits(),
+        collides_with: EntityType::Wall,
         my_collision_type: EntityType::Enemy,
     };
 
