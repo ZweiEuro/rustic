@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use bitmask_enum::bitmask;
-use parry2d::query::Contact;
+use parry2d::{na::Vector2, query::Contact};
 use specs::prelude::*;
 
 #[bitmask()]
@@ -26,7 +26,8 @@ impl Component for CollisionComp {
 pub struct CollisionResData {
     pub other: Entity,
     pub time_of_collision: Instant,
-    pub contact: Contact
+    pub contact: Contact,
+    pub vec_to_other: Vector2<f32>,
 }
 
 impl Component for CollisionResData {

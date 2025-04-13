@@ -2,11 +2,13 @@ extern crate sdl3;
 
 use components::CollisionComp;
 use components::EntityType;
+use parry2d::query::Contact;
 use sdl3::pixels::Color;
 use specs::DispatcherBuilder;
 use specs::prelude::*;
 use std::f32::INFINITY;
 use std::time::Duration;
+use std::time::Instant;
 use systems::SysCollisionResolver;
 use systems::SysSpawner;
 use systems::{SysCollision, SysInput, SysMovement, SysRender};
@@ -101,6 +103,10 @@ pub fn create_game_objects(world: &mut World) {
 pub struct SysState {
     running: bool,
 }
+
+#[derive(Default)]
+pub struct DebugSysState {}
+
 #[derive(Default)]
 
 pub struct PlayerEntity {
@@ -108,7 +114,6 @@ pub struct PlayerEntity {
 }
 
 pub fn main() {
-    print!("Hello, world!\n");
     let mut world = World::new();
 
     // SDL stuff
@@ -127,7 +132,7 @@ pub fn main() {
 
     let dispatcher_builder = DispatcherBuilder::new()
         .with(SysMovement, "movement", &[])
-        .with(SysCollision, "collision", &[])
+        .with(SysCollision, "collision", &["movement"])
         .with(
             SysInput {
                 event_pump: sdl_context.event_pump().unwrap(),
@@ -142,6 +147,7 @@ pub fn main() {
         });
 
     world.insert(SysState { running: true });
+    world.insert(DebugSysState::default());
 
     let mut dispatcher = dispatcher_builder.build();
     dispatcher.setup(&mut world);

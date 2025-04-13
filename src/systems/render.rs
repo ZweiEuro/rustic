@@ -1,18 +1,25 @@
-use sdl3::pixels::Color;
+use sdl3::{pixels::Color, render::FPoint};
 
 use specs::prelude::*;
 
-use crate::components::{DrawableComp, PhysicsComp, Shape};
+use crate::{
+    DebugSysState,
+    components::{DrawableComp, PhysicsComp, Shape},
+};
 
 #[derive(SystemData)]
 pub struct Data<'a> {
     physics: ReadStorage<'a, PhysicsComp>,
     drawable: ReadStorage<'a, DrawableComp>,
+
+    debug_sys_info: Read<'a, DebugSysState>,
 }
 
 pub struct SysRender {
     pub canvas: sdl3::render::Canvas<sdl3::video::Window>,
 }
+
+const draw_direction: bool = true;
 
 impl<'a> System<'a> for SysRender {
     type SystemData = Data<'a>;
@@ -43,6 +50,22 @@ impl<'a> System<'a> for SysRender {
                 Shape::Circle { radius } => {
                     todo!("Implement the circle drawing")
                 }
+            }
+
+            if (draw_direction) {
+                let start = FPoint::new(
+                    physics.physics.world_space_position.x,
+                    physics.physics.world_space_position.y,
+                );
+
+                let offset_direction = physics.physics.direction * 50.0;
+
+                let end = FPoint::new(
+                    physics.physics.world_space_position.x + offset_direction.x,
+                    physics.physics.world_space_position.y + offset_direction.y,
+                );
+
+                self.canvas.draw_line(start, end).unwrap();
             }
         }
 

@@ -2,7 +2,7 @@ use std::{ops::Deref, time::Instant};
 
 use parry2d::{
     na::{Isometry2, Vector2},
-    query::{self, intersection_test},
+    query::{self, Contact, intersection_test},
 };
 use specs::prelude::*;
 
@@ -76,26 +76,62 @@ impl<'a> System<'a> for SysCollision {
                 let prediction = 1.0;
 
                 // do the actual collision check
-                let res = query::contact(
-                    &Isometry2::new(object_a.1.physics.world_space_position, 0.),
-                    coll_a.deref(),
-                    &Isometry2::new(object_b.1.physics.world_space_position, 0.),
-                    coll_b.deref(),
-                    prediction,
-                )
-                .unwrap();
 
-                if let Some(contact) = res {
-                    collisionDataComp
-                        .insert(
-                            object_a.0,
-                            CollisionResData {
-                                other: object_b.0,
-                                time_of_collision: Instant::now(),
-                                contact,
-                            },
-                        )
-                        .unwrap();
+                // sort the collision object so its always a -> b in proper entity order
+
+                let res: Option<Contact>;
+
+                // collision should always be from a -> b , from smaller to larger type number
+                if object_a.2.my_collision_type > object_b.2.my_collision_type {
+                    res = query::contact(
+                        &Isometry2::new(object_b.1.physics.world_space_position, 0.),
+                        coll_b.deref(),
+                        &Isometry2::new(object_a.1.physics.world_space_position, 0.),
+                        coll_a.deref(),
+                        prediction,
+                    )
+                    .unwrap();
+
+                    if let Some(contact) = res {
+                        collisionDataComp
+                            .insert(
+                                object_b.0,
+                                CollisionResData {
+                                    other: object_a.0,
+                                    time_of_collision: Instant::now(),
+                                    contact,
+                                    vec_to_other: (object_a.1.physics.world_space_position
+                                        - object_b.1.physics.world_space_position)
+                                        .normalize(),
+                                },
+                            )
+                            .unwrap();
+                    }
+                } else {
+                    res = query::contact(
+                        &Isometry2::new(object_a.1.physics.world_space_position, 0.),
+                        coll_a.deref(),
+                        &Isometry2::new(object_b.1.physics.world_space_position, 0.),
+                        coll_b.deref(),
+                        prediction,
+                    )
+                    .unwrap();
+
+                    if let Some(contact) = res {
+                        collisionDataComp
+                            .insert(
+                                object_a.0,
+                                CollisionResData {
+                                    other: object_b.0,
+                                    time_of_collision: Instant::now(),
+                                    contact,
+                                    vec_to_other: (object_b.1.physics.world_space_position
+                                        - object_a.1.physics.world_space_position)
+                                        .normalize(),
+                                },
+                            )
+                            .unwrap();
+                    }
                 }
             }
         }
