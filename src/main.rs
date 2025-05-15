@@ -112,16 +112,14 @@ pub struct PlayerEntity {
     entity: Option<Entity>,
 }
 */
+use specs::{prelude::World, WorldExt};
 mod sokol;
 pub fn main() {
 
- //    let mut world = World::new();
-
+    let mut world = World::new();
 
     // Register systems
-
-
-    sokol::sokol_main(); 
+    sokol::sokol_main(world); 
 
 
 println!("Hello world");
