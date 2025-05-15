@@ -1,8 +1,7 @@
-extern crate sdl3;
-
+/*
+use sokol::gfx::Color;
 use components::CollisionComp;
 use components::EntityType;
-use sdl3::pixels::Color;
 use specs::DispatcherBuilder;
 use specs::prelude::*;
 use std::f32::INFINITY;
@@ -16,7 +15,6 @@ mod components;
 mod systems;
 mod world_objects;
 
-use std::thread;
 
 static MAIN_LOOP_FPS: i32 = 120;
 
@@ -43,6 +41,8 @@ pub fn create_game_objects(world: &mut World) {
         my_collision_type: EntityType::Enemy,
     };
 
+
+
     create_rect(
         world,
         [200.0, 50.0],
@@ -50,7 +50,7 @@ pub fn create_game_objects(world: &mut World) {
         Some([1.0, 0.0]),
         None,
         None,
-        None,
+        None 
     )
     .with(coll)
     .build();
@@ -61,6 +61,7 @@ pub fn create_game_objects(world: &mut World) {
         my_collision_type: EntityType::Wall,
     };
 
+
     create_rect(
         world,
         [10.0, 50.0],
@@ -68,7 +69,7 @@ pub fn create_game_objects(world: &mut World) {
         None,
         None,
         Some(INFINITY),
-        Some(Color::RGB(0, 0, 0)),
+        Some(Color{r: 0.0,g: 0.0, b: 0.0, a: 0.0}),
     )
     .with(coll)
     .build();
@@ -85,7 +86,7 @@ pub fn create_game_objects(world: &mut World) {
         None,
         None,
         Some(INFINITY),
-        Some(Color::RGB(0, 0, 0)),
+        Some(Color{r: 0.0,g: 0.0, b: 0.0, a: 0.0}),
     )
     .with(coll)
     .build();
@@ -110,24 +111,24 @@ pub struct DebugSysState {}
 pub struct PlayerEntity {
     entity: Option<Entity>,
 }
-
+*/
+mod sokol;
 pub fn main() {
-    let mut world = World::new();
 
-    // SDL stuff
+ //    let mut world = World::new();
 
-    let sdl_context = sdl3::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-
-    let window = video_subsystem
-        .window("ECS test", 800, 600)
-        .position_centered()
-        .opengl()
-        .build()
-        .unwrap();
 
     // Register systems
 
+
+    sokol::sokol_main(); 
+
+
+println!("Hello world");
+
+/*
+
+    return;
     let dispatcher_builder = DispatcherBuilder::new()
         .with(SysMovement, "movement", &[])
         .with(SysCollision, "collision", &["movement"])
@@ -164,4 +165,5 @@ pub fn main() {
             ((1.0 / MAIN_LOOP_FPS as f32) * 1000.0) as u64,
         ));
     }
+    */
 }

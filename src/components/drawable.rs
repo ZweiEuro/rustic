@@ -1,4 +1,4 @@
-use sdl3::pixels::Color;
+use sokol::gfx::Color;
 use specs::Component;
 use specs::prelude::*;
 

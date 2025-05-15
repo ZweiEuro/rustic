@@ -1,8 +1,7 @@
 use std::f32::INFINITY;
-
 use parry2d::na::Vector2;
-use sdl3::{event::Event, keyboard::Keycode, pixels::Color};
 use specs::prelude::*;
+use util::Color;
 
 use crate::components::{
     CollisionComp, DrawableComp, EntityType, KeyboardHandling, Physics, PhysicsComp, PressedKeys,

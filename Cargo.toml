@@ -12,10 +12,9 @@ version = "0.20.0"
 features = [ "shred-derive", "parallel" ]
 
 
-[dependencies.sdl3]
-version = "0.14.19"
-features = [ ]
-
+[dependencies.sokol]
+version="*"
+git="https://github.com/floooh/sokol-rust.git" 
 
 [[bin]]
 name = "rustic"
