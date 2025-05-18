@@ -1,4 +1,5 @@
-use std::fs;
+use std::fs; use std::path::Path;
+use notify::{recommended_watcher, Event, RecursiveMode, Result, Watcher};
 
 pub struct Shader {
     name: String,
@@ -17,9 +18,38 @@ impl Shader {
             fragment_string_contents:String::from("")};
 
         ret.load_from_disk();
+        ret.start_watching();
 
         return ret;
     }
+
+    fn start_watching(&self) {
+
+        fn event_fn(res: Result<notify::Event>) {
+            match res {
+                Ok(event) => println!("event: {:?}", event),
+                Err(e) => println!("watch error: {:?}", e),
+            }
+        }
+        let mut watcher = notify::recommended_watcher(event_fn);
+
+        if let Err(e) = watcher {
+            println!("Error creating file watcher {}", e);
+            panic!("could not create watcher")
+        }
+
+
+        let mut watcher = watcher.unwrap();
+        let res = watcher.watch(std::path::Path::new("./shaders/"), RecursiveMode::Recursive);
+
+
+        if let Err(e) = res {
+            println!("Error watching path {}", e);
+            panic!("could not create watcher")
+        }
+    println!("watching path");
+    }
+
 
     fn load_from_disk(&mut self) {
         let frag_path = format!("./shaders/{}.frag.glsl", self.name);
@@ -32,9 +62,14 @@ impl Shader {
 
         self.vertex_string_contents = fs::read_to_string(vert_path)
             .expect("Should have been able to read the file");
-    
+
         println!("frag shader content:\n{}", self.fragment_string_contents); 
     }
+
+    fn drop(&mut self) {
+        println!("{}", self.name);
+    }
+
 }
 
 

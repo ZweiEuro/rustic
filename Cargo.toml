@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 parry2d= "0.18.0"
 bitmask-enum = "2.2.5"
+notify = "8.0.0"
 
 [dependencies.specs]
 version = "0.20.0"
@@ -19,8 +20,6 @@ features = [ ]
 [dependencies.miniquad]
 version ="*"
 
-[dependencies]
-notify = "8.0.0"
 
 [[bin]]
 name = "rustic"

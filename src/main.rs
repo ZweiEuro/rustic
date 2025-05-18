@@ -1,4 +1,5 @@
 use miniquad::*;
+use std::{thread, time::Duration};
 
 mod shaders;
 
@@ -123,6 +124,12 @@ fn main() {
     println!("Hello world");
 
     let shader = shaders::Shader::new(String::from("basic"));
+
+
+loop {
+       thread::sleep(Duration::from_millis(4000));
+ 
+}
 
     return;
     let mut conf = conf::Conf::default();
