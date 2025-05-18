@@ -16,6 +16,11 @@ features = [ "shred-derive", "parallel" ]
 version = "0.14.19"
 features = [ ]
 
+[dependencies.miniquad]
+version ="*"
+
+[dependencies]
+notify = "8.0.0"
 
 [[bin]]
 name = "rustic"

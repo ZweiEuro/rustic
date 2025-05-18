@@ -1,167 +1,149 @@
-extern crate sdl3;
+use miniquad::*;
 
-use components::CollisionComp;
-use components::EntityType;
-use sdl3::pixels::Color;
-use specs::DispatcherBuilder;
-use specs::prelude::*;
-use std::f32::INFINITY;
-use std::time::Duration;
-use systems::SysCollisionResolver;
-use systems::SysSpawner;
-use systems::{SysCollision, SysInput, SysMovement, SysRender};
-use world_objects::{create_player, create_rect};
+mod shaders;
 
-mod components;
-mod systems;
-mod world_objects;
 
-use std::thread;
-
-static MAIN_LOOP_FPS: i32 = 120;
-
-pub fn create_game_objects(world: &mut World) {
-    let coll: CollisionComp = CollisionComp {
-        collides_with: EntityType::Wall,
-        my_collision_type: EntityType::Enemy,
-    };
-
-    create_rect(
-        world,
-        [50.0, 50.0],
-        [50.0, 50.0],
-        None,
-        Some(500.0),
-        Some(2.0),
-        None,
-    )
-    .with(coll)
-    .build();
-
-    let coll: CollisionComp = CollisionComp {
-        collides_with: EntityType::Wall,
-        my_collision_type: EntityType::Enemy,
-    };
-
-    create_rect(
-        world,
-        [200.0, 50.0],
-        [50.0, 50.0],
-        Some([1.0, 0.0]),
-        None,
-        None,
-        None,
-    )
-    .with(coll)
-    .build();
-
-    // world boundary
-    let coll: CollisionComp = CollisionComp {
-        collides_with: EntityType::all_bits(),
-        my_collision_type: EntityType::Wall,
-    };
-
-    create_rect(
-        world,
-        [10.0, 50.0],
-        [10.0, 200.0],
-        None,
-        None,
-        Some(INFINITY),
-        Some(Color::RGB(0, 0, 0)),
-    )
-    .with(coll)
-    .build();
-
-    let coll: CollisionComp = CollisionComp {
-        collides_with: EntityType::all_bits(),
-        my_collision_type: EntityType::Wall,
-    };
-
-    create_rect(
-        world,
-        [500.0, 50.0],
-        [10.0, 200.0],
-        None,
-        None,
-        Some(INFINITY),
-        Some(Color::RGB(0, 0, 0)),
-    )
-    .with(coll)
-    .build();
-
-    let player = create_player(world);
-
-    world.insert(PlayerEntity {
-        entity: Some(player),
-    });
+#[repr(C)]
+struct Vec2 {
+    x: f32,
+    y: f32,
+}
+#[repr(C)]
+struct Vertex {
+    pos: Vec2,
+    uv: Vec2,
 }
 
-#[derive(Default)]
-pub struct SysState {
-    running: bool,
+struct Stage {
+    ctx: Box<dyn RenderingBackend>,
+
+    pipeline: Pipeline,
+    bindings: Bindings,
 }
 
-#[derive(Default)]
-pub struct DebugSysState {}
+impl Stage {
+    pub fn new() -> Stage {
+        let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
-#[derive(Default)]
+        #[rustfmt::skip]
+        let vertices: [Vertex; 4] = [
+            Vertex { pos : Vec2 { x: -0.5, y: -0.5 }, uv: Vec2 { x: 0., y: 0. } },
+            Vertex { pos : Vec2 { x:  0.5, y: -0.5 }, uv: Vec2 { x: 1., y: 0. } },
+            Vertex { pos : Vec2 { x:  0.5, y:  0.5 }, uv: Vec2 { x: 1., y: 1. } },
+            Vertex { pos : Vec2 { x: -0.5, y:  0.5 }, uv: Vec2 { x: 0., y: 1. } },
+        ];
+        let vertex_buffer = ctx.new_buffer(
+            BufferType::VertexBuffer,
+            BufferUsage::Immutable,
+            BufferSource::slice(&vertices),
+        );
 
-pub struct PlayerEntity {
-    entity: Option<Entity>,
-}
+        let indices: [u16; 6] = [0, 1, 2, 0, 2, 3];
+        let index_buffer = ctx.new_buffer(
+            BufferType::IndexBuffer,
+            BufferUsage::Immutable,
+            BufferSource::slice(&indices),
+        );
 
-pub fn main() {
-    let mut world = World::new();
+        let pixels: [u8; 4 * 4 * 4] = [
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00,
+            0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        ];
+        let texture = ctx.new_texture_from_rgba8(4, 4, &pixels);
 
-    // SDL stuff
+        let bindings = Bindings {
+            vertex_buffers: vec![vertex_buffer],
+            index_buffer: index_buffer,
+            images: vec![texture],
+        };
 
-    let sdl_context = sdl3::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
+        let shader = ctx
+            .new_shader(
+                match ctx.info().backend {
+                    Backend::OpenGl => ShaderSource::Glsl {
+                        vertex: "sometext",//shader::VERTEX,
+                        fragment: "sometext"//shader::FRAGMENT,
+                    },
+                    Backend::Metal => ShaderSource::Msl {
+                        program: "sometext"//shader::METAL,
+                    },
+                },
+                shader::meta(),
+            )
+            .unwrap();
 
-    let window = video_subsystem
-        .window("ECS test", 800, 600)
-        .position_centered()
-        .opengl()
-        .build()
-        .unwrap();
+        let pipeline = ctx.new_pipeline(
+            &[BufferLayout::default()],
+            &[
+                VertexAttribute::new("in_pos", VertexFormat::Float2),
+                VertexAttribute::new("in_uv", VertexFormat::Float2),
+            ],
+            shader,
+            PipelineParams::default(),
+        );
 
-    // Register systems
-
-    let dispatcher_builder = DispatcherBuilder::new()
-        .with(SysMovement, "movement", &[])
-        .with(SysCollision, "collision", &["movement"])
-        .with(
-            SysInput {
-                event_pump: sdl_context.event_pump().unwrap(),
-            },
-            "input",
-            &[],
-        )
-        .with(SysSpawner, "spawner", &["input"])
-        .with(SysCollisionResolver, "collision_resolver", &["collision"])
-        .with_thread_local(SysRender {
-            canvas: window.into_canvas(),
-        });
-
-    world.insert(SysState { running: true });
-    world.insert(DebugSysState::default());
-
-    let mut dispatcher = dispatcher_builder.build();
-    dispatcher.setup(&mut world);
-
-    create_game_objects(&mut world);
-
-    'running: loop {
-        dispatcher.dispatch(&world);
-        world.maintain();
-
-        if world.read_resource::<SysState>().running == false {
-            break 'running;
+        Stage {
+            pipeline,
+            bindings,
+            ctx,
         }
+    }
+}
 
-        thread::sleep(Duration::from_millis(
-            ((1.0 / MAIN_LOOP_FPS as f32) * 1000.0) as u64,
-        ));
+impl EventHandler for Stage {
+    fn update(&mut self) {}
+
+    fn draw(&mut self) {
+        let t = date::now();
+
+        self.ctx.begin_default_pass(Default::default());
+
+        self.ctx.apply_pipeline(&self.pipeline);
+        self.ctx.apply_bindings(&self.bindings);
+        for i in 0..10 {
+            let t = t + i as f64 * 0.3;
+
+            self.ctx
+                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
+                    offset: (t.sin() as f32 * 0.5, (t * 3.).cos() as f32 * 0.5),
+                }));
+            self.ctx.draw(0, 6, 1);
+        }
+        self.ctx.end_render_pass();
+
+        self.ctx.commit_frame();
+    }
+}
+
+fn main() {
+
+    println!("Hello world");
+
+    let shader = shaders::Shader::new(String::from("basic"));
+
+    return;
+    let mut conf = conf::Conf::default();
+
+    conf.platform.apple_gfx_api = conf::AppleGfxApi::OpenGl;
+
+    miniquad::start(conf, move || Box::new(Stage::new()));
+}
+
+mod shader {
+    use miniquad::*;
+    pub fn meta() -> ShaderMeta {
+        ShaderMeta {
+            images: vec!["tex".to_string()],
+            uniforms: UniformBlockLayout {
+                uniforms: vec![UniformDesc::new("offset", UniformType::Float2)],
+            },
+        }
+    }
+    #[repr(C)]
+    pub struct Uniforms {
+        pub offset: (f32, f32),
     }
 }
