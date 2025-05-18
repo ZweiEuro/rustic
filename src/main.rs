@@ -63,15 +63,7 @@ impl Stage {
 
         let shader = ctx
             .new_shader(
-                match ctx.info().backend {
-                    Backend::OpenGl => ShaderSource::Glsl {
-                        vertex: "sometext",//shader::VERTEX,
-                        fragment: "sometext"//shader::FRAGMENT,
-                    },
-                    Backend::Metal => ShaderSource::Msl {
-                        program: "sometext"//shader::METAL,
-                    },
-                },
+                shaders::Shader::new("basic".to_owned()).get_shadersource(),
                 shader::meta(),
             )
             .unwrap();
@@ -123,15 +115,8 @@ fn main() {
 
     println!("Hello world");
 
-    let shader = shaders::Shader::new(String::from("basic"));
 
 
-loop {
-       thread::sleep(Duration::from_millis(4000));
- 
-}
-
-    return;
     let mut conf = conf::Conf::default();
 
     conf.platform.apple_gfx_api = conf::AppleGfxApi::OpenGl;
