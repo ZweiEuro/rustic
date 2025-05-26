@@ -26,18 +26,15 @@ impl Shader {
         let frag_path = format!("./shaders/{}.frag.glsl", self.name);
         let vert_path = format!("./shaders/{}.vert.glsl", self.name);
 
-        println!("{} {}",frag_path, vert_path);
 
         self.fragment_string_contents = fs::read_to_string(frag_path)
             .expect("Should have been able to read the file");
 
         self.vertex_string_contents = fs::read_to_string(vert_path)
             .expect("Should have been able to read the file");
-
-        println!("frag shader content:\n{}", self.fragment_string_contents); 
     }
 
-pub fn get_shadersource(&self) -> ShaderSource{
+    pub fn get_shadersource(&self) -> ShaderSource{
         return ShaderSource::Glsl{ vertex: &self.vertex_string_contents, fragment: &self.fragment_string_contents};
     }
 

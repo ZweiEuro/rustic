@@ -1,5 +1,6 @@
 use miniquad::*;
-use std::{thread, time::Duration};
+use std::{panic, sync::Mutex, time::{Duration, SystemTime}};
+
 
 mod shaders;
 
@@ -25,6 +26,8 @@ struct Stage {
 impl Stage {
     pub fn new() -> Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
+
+
 
         #[rustfmt::skip]
         let vertices: [Vertex; 4] = [
@@ -86,15 +89,45 @@ impl Stage {
     }
 }
 
+
+static NOW : Mutex<Option<f64>> = Mutex::new(None);
+
+
 impl EventHandler for Stage {
     fn update(&mut self) {}
 
+    fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
+
+
+        if _keycode == KeyCode::Escape {
+            window::request_quit();
+        }
+
+        println!("Unhandled key down event {}", _keycode as u16);
+
+    }
+
     fn draw(&mut self) {
-        let t = date::now();
 
         self.ctx.begin_default_pass(Default::default());
 
-        self.ctx.apply_pipeline(&self.pipeline);
+        let mut time = NOW.lock().unwrap();
+
+        if time.is_none(){
+            time.replace(date::now());
+            println!("time {}", time.unwrap());
+        }
+
+
+        if time.unwrap() + 2.0 < date::now()  {
+            self.ctx.clear(Some((1.0,0.0,0.0,0.0)), None, None);
+        }else{
+            self.ctx.clear(Some((0.0,0.0,0.0,0.0)), None, None);
+        }
+
+
+
+   /* self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
         for i in 0..10 {
             let t = t + i as f64 * 0.3;
@@ -103,9 +136,9 @@ impl EventHandler for Stage {
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
                     offset: (t.sin() as f32 * 0.5, (t * 3.).cos() as f32 * 0.5),
                 }));
-            self.ctx.draw(0, 6, 1);
+            self.ctx.draw(0, 10, 1);
         }
-        self.ctx.end_render_pass();
+     */   self.ctx.end_render_pass();
 
         self.ctx.commit_frame();
     }
@@ -139,3 +172,5 @@ mod shader {
         pub offset: (f32, f32),
     }
 }
+
+
