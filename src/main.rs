@@ -13,7 +13,6 @@ struct Vec2 {
 #[repr(C)]
 struct Vertex {
     pos: Vec2,
-    uv: Vec2,
 }
 
 struct Stage {
@@ -28,13 +27,11 @@ impl Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
 
-
         #[rustfmt::skip]
-        let vertices: [Vertex; 4] = [
-            Vertex { pos : Vec2 { x: -0.5, y: -0.5 }, uv: Vec2 { x: 0., y: 0. } },
-            Vertex { pos : Vec2 { x:  0.5, y: -0.5 }, uv: Vec2 { x: 1., y: 0. } },
-            Vertex { pos : Vec2 { x:  0.5, y:  0.5 }, uv: Vec2 { x: 1., y: 1. } },
-            Vertex { pos : Vec2 { x: -0.5, y:  0.5 }, uv: Vec2 { x: 0., y: 1. } },
+        let vertices: [Vertex; 3] = [
+            Vertex { pos : Vec2 { x: -0.5, y: -0.5 }},
+            Vertex { pos : Vec2 { x:  0.5, y: -0.5 }},
+            Vertex { pos : Vec2 { x:  0.5, y:  0.5 }},
         ];
         let vertex_buffer = ctx.new_buffer(
             BufferType::VertexBuffer,
@@ -42,7 +39,7 @@ impl Stage {
             BufferSource::slice(&vertices),
         );
 
-        let indices: [u16; 6] = [0, 1, 2, 0, 2, 3];
+        let indices: [u16; 3] = [0, 1, 2];
         let index_buffer = ctx.new_buffer(
             BufferType::IndexBuffer,
             BufferUsage::Immutable,
@@ -75,7 +72,6 @@ impl Stage {
             &[BufferLayout::default()],
             &[
                 VertexAttribute::new("in_pos", VertexFormat::Float2),
-                VertexAttribute::new("in_uv", VertexFormat::Float2),
             ],
             shader,
             PipelineParams::default(),
@@ -111,34 +107,15 @@ impl EventHandler for Stage {
 
         self.ctx.begin_default_pass(Default::default());
 
-        let mut time = NOW.lock().unwrap();
-
-        if time.is_none(){
-            time.replace(date::now());
-            println!("time {}", time.unwrap());
-        }
+        self.ctx.clear(Some((0.0,0.0,0.0,0.0)), None, None);
 
 
-        if time.unwrap() + 2.0 < date::now()  {
-            self.ctx.clear(Some((1.0,0.0,0.0,0.0)), None, None);
-        }else{
-            self.ctx.clear(Some((0.0,0.0,0.0,0.0)), None, None);
-        }
-
-
-
-   /* self.ctx.apply_pipeline(&self.pipeline);
+        self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
-        for i in 0..10 {
-            let t = t + i as f64 * 0.3;
 
-            self.ctx
-                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    offset: (t.sin() as f32 * 0.5, (t * 3.).cos() as f32 * 0.5),
-                }));
-            self.ctx.draw(0, 10, 1);
-        }
-     */   self.ctx.end_render_pass();
+
+        self.ctx.draw(0, 3, 1);
+        self.ctx.end_render_pass();
 
         self.ctx.commit_frame();
     }

@@ -1,8 +1,7 @@
-#version 100
-varying lowp vec2 texcoord;
+#version 330 core
+out vec4 FragColor;
 
-uniform sampler2D tex;
-
-void main() {
-    gl_FragColor = texture2D(tex, texcoord);
+void main()
+{
+    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
 }
