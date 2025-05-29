@@ -26,12 +26,12 @@ impl Stage {
     pub fn new() -> Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
-
         #[rustfmt::skip]
-        let vertices: [Vertex; 3] = [
-            Vertex { pos : Vec2 { x: -0.5, y: -0.5 }},
-            Vertex { pos : Vec2 { x:  0.5, y: -0.5 }},
-            Vertex { pos : Vec2 { x:  0.5, y:  0.5 }},
+        let vertices: [Vertex; 4] = [
+            Vertex { pos : Vec2 { x:  0.5, y:  0.5}},
+            Vertex { pos : Vec2 { x:  0.5, y: -0.5}},
+            Vertex { pos : Vec2 { x: -0.5, y: -0.5}},
+            Vertex { pos : Vec2 { x: -0.5, y:  0.5}},
         ];
         let vertex_buffer = ctx.new_buffer(
             BufferType::VertexBuffer,
@@ -39,7 +39,7 @@ impl Stage {
             BufferSource::slice(&vertices),
         );
 
-        let indices: [u16; 3] = [0, 1, 2];
+        let indices: [u16; 6] = [0, 1, 3, 1, 2, 3];
         let index_buffer = ctx.new_buffer(
             BufferType::IndexBuffer,
             BufferUsage::Immutable,
@@ -114,7 +114,7 @@ impl EventHandler for Stage {
         self.ctx.apply_bindings(&self.bindings);
 
 
-        self.ctx.draw(0, 3, 1);
+        self.ctx.draw(0, 6, 1);
         self.ctx.end_render_pass();
 
         self.ctx.commit_frame();
