@@ -82,7 +82,7 @@ impl Texture {
 
     pub fn get_texture_id(&mut self, ctx: & mut Box<dyn RenderingBackend>) -> TextureId {
         if self.texture_id.is_none() {
-            self.texture_id = Some(ctx.new_texture_from_rgba8(64 , 64,  unsafe { std::slice::from_raw_parts(self.img, 64 * 64 * 4) }));
+            self.texture_id = Some(ctx.new_texture_from_rgba8(self.width as u16 , self.width as u16,  unsafe { std::slice::from_raw_parts(self.img, (self.width * self.height * 4) as usize)}));
         }
         return self.texture_id.unwrap();
     }

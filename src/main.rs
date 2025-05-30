@@ -68,10 +68,13 @@ impl Stage {
 
         let mut texture = textures::Texture::new("test.png".to_owned());
 
+        let texture_id = texture.get_texture_id(&mut ctx);
+        ctx.texture_set_filter(texture_id, FilterMode::Nearest, MipmapFilterMode::None);
+       
         let bindings = Bindings {
             vertex_buffers: vec![vertex_buffer],
             index_buffer: index_buffer,
-            images: vec![texture.get_texture_id(&mut ctx)],
+            images: vec![texture_id],
         };
 
         let shader = ctx
@@ -191,6 +194,8 @@ fn main() {
     let mut conf = conf::Conf::default();
 
     conf.platform.apple_gfx_api = conf::AppleGfxApi::OpenGl;
+    conf.window_height = 600;
+    conf.window_width = 600;
 
     miniquad::start(conf, move || Box::new(Stage::new()));
 }
