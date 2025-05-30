@@ -3,7 +3,7 @@ use std::{panic, sync::Mutex, time::{Duration, SystemTime}};
 
 
 mod shaders;
-
+mod textures;
 
 #[repr(C)]
 struct Vec2 {
@@ -20,7 +20,7 @@ struct Vec3 {
 #[repr(C)]
 struct Vertex {
     pos: Vec2,
-    color: Vec3,
+    uv: Vec2,
 }
 
 struct Settings {
@@ -39,6 +39,7 @@ struct Stage {
 
     settings: Settings,
 
+    textures: Vec<textures::Texture>
 }
 
 impl Stage {
@@ -47,10 +48,10 @@ impl Stage {
 
         #[rustfmt::skip]
         let vertices: [Vertex; 4] = [
-            Vertex { pos : Vec2 { x:  0.5, y:  0.5}, color: Vec3{ x: 1.0, y: 0.0, z: 0.0}},
-            Vertex { pos : Vec2 { x:  0.5, y: -0.5}, color: Vec3{ x: 0.0, y: 1.0, z: 0.0}},
-            Vertex { pos : Vec2 { x: -0.5, y: -0.5}, color: Vec3{ x: 0.0, y: 0.0, z: 1.0}},
-            Vertex { pos : Vec2 { x: -0.5, y:  0.5}, color: Vec3{ x: 0.0, y: 0.0, z: 0.0}},
+            Vertex { pos : Vec2 { x: -0.5, y: -0.5 }, uv: Vec2 { x: 0., y: 0. } },
+            Vertex { pos : Vec2 { x:  0.5, y: -0.5 }, uv: Vec2 { x: 1., y: 0. } },
+            Vertex { pos : Vec2 { x:  0.5, y:  0.5 }, uv: Vec2 { x: 1., y: 1. } },
+            Vertex { pos : Vec2 { x: -0.5, y:  0.5 }, uv: Vec2 { x: 0., y: 1. } },
         ];
         let vertex_buffer = ctx.new_buffer(
             BufferType::VertexBuffer,
@@ -65,11 +66,12 @@ impl Stage {
             BufferSource::slice(&indices),
         );
 
+        let mut texture = textures::Texture::new("test.png".to_owned());
 
         let bindings = Bindings {
             vertex_buffers: vec![vertex_buffer],
             index_buffer: index_buffer,
-            images: vec![],
+            images: vec![texture.get_texture_id(&mut ctx)],
         };
 
         let shader = ctx
@@ -83,7 +85,7 @@ impl Stage {
             &[BufferLayout::default()],
             &[
                 VertexAttribute::new("in_pos", VertexFormat::Float2),
-                VertexAttribute::new("aColor", VertexFormat::Float3),
+                VertexAttribute::new("uv_pos", VertexFormat::Float2),
             ],
             shader,
             PipelineParams::default(),
@@ -103,7 +105,8 @@ impl Stage {
             pipeline,
             bindings,
             ctx,
-            settings
+            settings,
+            textures: vec![texture],
         }
     }
 }
@@ -172,22 +175,6 @@ impl EventHandler for Stage {
         self.ctx.apply_bindings(&self.bindings);
 
 
-        let t = date::now();
-        if self.settings.debug_toggle_1 {
-            self.ctx
-                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    our_color: (t.sin() as f32 + 1.0, 0.0, 0.0, 1.0),
-                }));
-
-        } else{
-
-            self.ctx
-                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    our_color: (0.0, t.sin() as f32 + 1.0, 0.0, 1.0),
-                }));
-        }
-
-
         self.ctx.draw(0, 6, 1);
         self.ctx.end_render_pass();
 
@@ -212,15 +199,14 @@ mod shader {
     use miniquad::*;
     pub fn meta() -> ShaderMeta {
         ShaderMeta {
-            images: vec![],
+            images: vec!["tex".to_string()],
             uniforms: UniformBlockLayout {
-                uniforms: vec![UniformDesc::new("ourColor", UniformType::Float4)],
+                uniforms: vec![],
             },
         }
     }
     #[repr(C)]
     pub struct Uniforms {
-        pub our_color: (f32, f32, f32, f32),
     }
 }
 

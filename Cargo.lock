@@ -612,6 +612,7 @@ dependencies = [
  "parry2d",
  "sdl3",
  "specs",
+ "stb_image_rust",
 ]
 
 [[package]]
@@ -738,6 +739,12 @@ dependencies = [
  "shrev",
  "tuple_utils",
 ]
+
+[[package]]
+name = "stb_image_rust"
+version = "2.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d682a002ab01d5e09f47d22cfe4a55a8451cdaef5b0f87d6c8b8c3bc4360b6aa"
 
 [[package]]
 name = "syn"
