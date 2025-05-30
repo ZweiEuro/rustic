@@ -17,6 +17,11 @@ struct Vertex {
 
 struct Settings {
     render_wireframe: bool,
+    debug_toggle_1: bool,
+    debug_toggle_2: bool,
+    debug_toggle_3: bool,
+    debug_toggle_4: bool,
+    debug_toggle_5: bool,
 }
 
 struct Stage {
@@ -53,19 +58,11 @@ impl Stage {
             BufferSource::slice(&indices),
         );
 
-        let pixels: [u8; 4 * 4 * 4] = [
-            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00,
-            0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF,
-            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0xFF, 0xFF,
-            0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-            0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        ];
-        let texture = ctx.new_texture_from_rgba8(4, 4, &pixels);
 
         let bindings = Bindings {
             vertex_buffers: vec![vertex_buffer],
             index_buffer: index_buffer,
-            images: vec![texture],
+            images: vec![],
         };
 
         let shader = ctx
@@ -86,7 +83,12 @@ impl Stage {
 
 
         let settings = Settings {
-            render_wireframe: false
+            render_wireframe: false,
+            debug_toggle_1 : false,
+            debug_toggle_2 : false,
+            debug_toggle_3 : false,
+            debug_toggle_4 : false,
+            debug_toggle_5 : false,
         };
 
 
@@ -115,6 +117,27 @@ impl EventHandler for Stage {
                 self.settings.render_wireframe = !self.settings.render_wireframe;
                 println!("Toggle wireframe {}", self.settings.render_wireframe);
             }
+
+            KeyCode::Key1 => {
+                self.settings.debug_toggle_1 = !self.settings.debug_toggle_1;
+                println!("toggled debug 1");
+            }
+
+            KeyCode::Key2 => {
+                self.settings.debug_toggle_2 = !self.settings.debug_toggle_2;
+                println!("toggled debug 2");
+            }
+
+            KeyCode::Key3 => {
+                self.settings.debug_toggle_3 = !self.settings.debug_toggle_3;
+                println!("toggled debug 3");
+            }
+
+            KeyCode::Key4 => {
+                self.settings.debug_toggle_4 = !self.settings.debug_toggle_4;
+                println!("toggled debug 4");
+            }
+
             _ => {
                 println!("Unhandled key down event {}", _keycode as u16);
             }  
@@ -130,14 +153,34 @@ impl EventHandler for Stage {
 
 
         unsafe{
+            // toggle the wireframe rendering by changing the gl polygon format
             if self.settings.render_wireframe {
                 raw_gl::glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             }else {
                 raw_gl::glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
         }
+
+
+
+
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
+
+
+        if self.settings.debug_toggle_1 {
+            self.ctx
+                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
+                    our_color: (1.0, 0.0, 0.0, 1.0),
+                }));
+
+        } else{
+
+            self.ctx
+                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
+                    our_color: (0.0, 1.0, 0.0, 1.0),
+                }));
+        }
 
 
         self.ctx.draw(0, 6, 1);
@@ -164,15 +207,15 @@ mod shader {
     use miniquad::*;
     pub fn meta() -> ShaderMeta {
         ShaderMeta {
-            images: vec!["tex".to_string()],
+            images: vec![],
             uniforms: UniformBlockLayout {
-                uniforms: vec![UniformDesc::new("offset", UniformType::Float2)],
+                uniforms: vec![UniformDesc::new("ourColor", UniformType::Float4)],
             },
         }
     }
     #[repr(C)]
     pub struct Uniforms {
-        pub offset: (f32, f32),
+        pub our_color: (f32, f32, f32, f32),
     }
 }
 
