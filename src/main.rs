@@ -10,9 +10,17 @@ struct Vec2 {
     x: f32,
     y: f32,
 }
+
+#[repr(C)]
+struct Vec3 {
+    x: f32,
+    y: f32,
+    z: f32,
+}
 #[repr(C)]
 struct Vertex {
     pos: Vec2,
+    color: Vec3,
 }
 
 struct Settings {
@@ -21,7 +29,6 @@ struct Settings {
     debug_toggle_2: bool,
     debug_toggle_3: bool,
     debug_toggle_4: bool,
-    debug_toggle_5: bool,
 }
 
 struct Stage {
@@ -40,10 +47,10 @@ impl Stage {
 
         #[rustfmt::skip]
         let vertices: [Vertex; 4] = [
-            Vertex { pos : Vec2 { x:  0.5, y:  0.5}},
-            Vertex { pos : Vec2 { x:  0.5, y: -0.5}},
-            Vertex { pos : Vec2 { x: -0.5, y: -0.5}},
-            Vertex { pos : Vec2 { x: -0.5, y:  0.5}},
+            Vertex { pos : Vec2 { x:  0.5, y:  0.5}, color: Vec3{ x: 1.0, y: 0.0, z: 0.0}},
+            Vertex { pos : Vec2 { x:  0.5, y: -0.5}, color: Vec3{ x: 0.0, y: 1.0, z: 0.0}},
+            Vertex { pos : Vec2 { x: -0.5, y: -0.5}, color: Vec3{ x: 0.0, y: 0.0, z: 1.0}},
+            Vertex { pos : Vec2 { x: -0.5, y:  0.5}, color: Vec3{ x: 0.0, y: 0.0, z: 0.0}},
         ];
         let vertex_buffer = ctx.new_buffer(
             BufferType::VertexBuffer,
@@ -76,6 +83,7 @@ impl Stage {
             &[BufferLayout::default()],
             &[
                 VertexAttribute::new("in_pos", VertexFormat::Float2),
+                VertexAttribute::new("aColor", VertexFormat::Float3),
             ],
             shader,
             PipelineParams::default(),
@@ -88,7 +96,6 @@ impl Stage {
             debug_toggle_2 : false,
             debug_toggle_3 : false,
             debug_toggle_4 : false,
-            debug_toggle_5 : false,
         };
 
 
@@ -161,24 +168,22 @@ impl EventHandler for Stage {
             }
         }
 
-
-
-
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
 
 
+        let t = date::now();
         if self.settings.debug_toggle_1 {
             self.ctx
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    our_color: (1.0, 0.0, 0.0, 1.0),
+                    our_color: (t.sin() as f32 + 1.0, 0.0, 0.0, 1.0),
                 }));
 
         } else{
 
             self.ctx
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    our_color: (0.0, 1.0, 0.0, 1.0),
+                    our_color: (0.0, t.sin() as f32 + 1.0, 0.0, 1.0),
                 }));
         }
 
