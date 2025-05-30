@@ -1,4 +1,4 @@
-use miniquad::*;
+use miniquad::{gl::{GL_FILL, GL_FRONT_AND_BACK, GL_LINE}, *};
 use std::{panic, sync::Mutex, time::{Duration, SystemTime}};
 
 
@@ -15,11 +15,18 @@ struct Vertex {
     pos: Vec2,
 }
 
+struct Settings {
+    render_wireframe: bool,
+}
+
 struct Stage {
     ctx: Box<dyn RenderingBackend>,
 
     pipeline: Pipeline,
     bindings: Bindings,
+
+    settings: Settings,
+
 }
 
 impl Stage {
@@ -77,16 +84,22 @@ impl Stage {
             PipelineParams::default(),
         );
 
+
+        let settings = Settings {
+            render_wireframe: false
+        };
+
+
         Stage {
             pipeline,
             bindings,
             ctx,
+            settings
         }
     }
 }
 
 
-static NOW : Mutex<Option<f64>> = Mutex::new(None);
 
 
 impl EventHandler for Stage {
@@ -94,12 +107,18 @@ impl EventHandler for Stage {
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
 
-
-        if _keycode == KeyCode::Escape {
-            window::request_quit();
+        match _keycode {
+            KeyCode::Escape => {
+                window::request_quit();
+            }
+            KeyCode::W => {
+                self.settings.render_wireframe = !self.settings.render_wireframe;
+                println!("Toggle wireframe {}", self.settings.render_wireframe);
+            }
+            _ => {
+                println!("Unhandled key down event {}", _keycode as u16);
+            }  
         }
-
-        println!("Unhandled key down event {}", _keycode as u16);
 
     }
 
@@ -110,6 +129,13 @@ impl EventHandler for Stage {
         self.ctx.clear(Some((0.0,0.0,0.0,0.0)), None, None);
 
 
+        unsafe{
+            if self.settings.render_wireframe {
+                raw_gl::glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            }else {
+                raw_gl::glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            }
+        }
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
 
