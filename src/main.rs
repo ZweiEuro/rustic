@@ -1,4 +1,5 @@
 use miniquad::{gl::{GL_FILL, GL_FRONT_AND_BACK, GL_LINE}, *};
+use sdl3::libc::printf;
 use std::{panic, sync::Mutex, time::{Duration, SystemTime}};
 
 
@@ -39,7 +40,8 @@ struct Stage {
 
     settings: Settings,
 
-    textures: Vec<textures::Texture>
+    textures: Vec<textures::Texture>,
+    shaders: Vec<shaders::Shader>,
 }
 
 impl Stage {
@@ -77,9 +79,11 @@ impl Stage {
             images: vec![texture_id],
         };
 
+        let myshader = shaders::Shader::new("basic".to_owned());
+
         let shader = ctx
             .new_shader(
-                shaders::Shader::new("basic".to_owned()).get_shadersource(),
+                myshader.get_shadersource(),
                 shader::meta(),
             )
             .unwrap();
@@ -110,6 +114,7 @@ impl Stage {
             ctx,
             settings,
             textures: vec![texture],
+            shaders: vec![myshader],
         }
     }
 }
@@ -118,12 +123,21 @@ impl Stage {
 
 
 impl EventHandler for Stage {
-    fn update(&mut self) {}
+    fn update(&mut self) {
+        for  shader in  self.shaders.iter_mut(){
+            if shader.reload_if_needed() {
+               // println!("reload!");
+            }
+        }
+    }
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
 
         match _keycode {
             KeyCode::Escape => {
+                for texture in self.textures.iter_mut(){
+                    texture.delete_texture(&mut self.ctx);
+                }
                 window::request_quit();
             }
             KeyCode::W => {
@@ -165,6 +179,7 @@ impl EventHandler for Stage {
         self.ctx.clear(Some((0.0,0.0,0.0,0.0)), None, None);
 
 
+
         unsafe{
             // toggle the wireframe rendering by changing the gl polygon format
             if self.settings.render_wireframe {
@@ -198,6 +213,8 @@ fn main() {
     conf.window_width = 600;
 
     miniquad::start(conf, move || Box::new(Stage::new()));
+
+    println!("exiting miniquad");
 }
 
 mod shader {
