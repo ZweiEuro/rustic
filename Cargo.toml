@@ -8,6 +8,7 @@ parry2d= "0.18.0"
 bitmask-enum = "2.2.5"
 notify = "8.0.0"
 stb_image_rust = "2.27.2"
+futures = "0.3.31"
 
 [dependencies.specs]
 version = "0.20.0"
