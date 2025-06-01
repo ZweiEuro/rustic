@@ -1,3 +1,4 @@
+use glm::vec3;
 use miniquad::{gl::{GL_FILL, GL_FRONT_AND_BACK, GL_LINE}, *};
 use std::{panic, sync::Mutex, time::{Duration, SystemTime}};
 
@@ -38,6 +39,7 @@ struct Settings {
 
 struct WorldState {
     camera_rotation: f32,
+    camera_distance: f32,
 }
 
 struct Stage {
@@ -65,11 +67,6 @@ impl Stage {
             Vertex { pos : Vec2 { x:  0.5, y:  0.5 }, uv: Vec2 { x: 1., y: 1. } },
             Vertex { pos : Vec2 { x: -0.5, y:  0.5 }, uv: Vec2 { x: 0., y: 1. } },
         ];
-
-
-
-
-
 
         let vertex_buffer = ctx.new_buffer(
             BufferType::VertexBuffer,
@@ -131,7 +128,7 @@ impl Stage {
             settings,
             textures: vec![texture],
             shaders: vec![myshader],
-            world: WorldState { camera_rotation: 0.0 }
+            world: WorldState { camera_rotation: 0.0, camera_distance: 0.0 }
         }
     }
 }
@@ -171,7 +168,7 @@ impl EventHandler for Stage {
             KeyCode::Key2 => {
                 self.settings.debug_toggle_2 = !self.settings.debug_toggle_2;
                 println!("toggled debug 2");
-                self.world.camera_rotation -= 90.0;
+                self.world.camera_distance -= 1.0;
             }
 
             KeyCode::Key3 => {
@@ -222,6 +219,11 @@ impl EventHandler for Stage {
             &rotation_matrix,
             glm::builtin::radians(self.world.camera_rotation),
             glm::vec3(0.0, 0.0, 1.0)
+        );
+
+        let rotation_matrix = glm::ext::translate(
+            &rotation_matrix, 
+            vec3(0.0, self.world.camera_distance, 0.0 )
         );
 
         self.ctx
