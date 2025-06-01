@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::{collections::HashSet, sync::{LazyLock, Mutex}};
 
 use glm::{Vec3, Vec2};
 use miniquad::{gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES}, *};
@@ -34,7 +34,16 @@ struct Settings {
     debug_toggle_4: bool,
 }
 
+struct Camera{
+    camera_pos: Vec3,
+    camera_front: Vec3, // where the camera is looking at
+    camera_up: Vec3, // relative 'up' for the camera
+}
+const CAMERA_SPEED: f32 = 0.05;
+
 struct WorldState {
+
+    cam: Camera,
 
     model: glm::Mat4,
     view: glm::Mat4,
@@ -157,11 +166,6 @@ impl Stage {
             debug_toggle_4 : false,
         };
 
-        let  mut view = glm::ext::look_at(
-            Vec3 {x: 0.0, y: 0.0, z: 1.0 }, 
-            Vec3 {x: 0.0, y: 0.0, z: 0.0 },
-            Vec3 {x: 0.0, y: -1.0, z: 0.0 }
-        );
 
         let perspective = glm::ext::perspective(glm::radians(45.0), 1.0 , 0.1, 100.0);
 
@@ -173,9 +177,14 @@ impl Stage {
             textures: vec![texture],
             shaders: vec![myshader],
             world: WorldState {
+                cam: Camera {
+                    camera_pos: Vec3 {x: 0.0, y: 0.0, z: 3.0},
+                    camera_front: Vec3 {x: 0.0, y: 0.0, z: -1.0},
+                    camera_up: Vec3 {x: 0.0, y: 1.0, z:0.0},
+                },
                 model: M4_UNIT.clone(), 
-                view: view.clone(),
-                projection: perspective
+                view: M4_UNIT.clone(),
+                projection: perspective,
             }
         }
     }
@@ -185,6 +194,8 @@ impl Stage {
 
 static LAST_TIME_UPDATED: Mutex<f64> = Mutex::new(0.0);
 static TOTAL_TIME: Mutex<f64> = Mutex::new(0.0);
+
+static PRESSED_KEYS: LazyLock<Mutex<HashSet<KeyCode>>> = LazyLock::new(|| Mutex::new(HashSet::new()));
 
 impl EventHandler for Stage {
     fn update(&mut self) {
@@ -203,17 +214,27 @@ impl EventHandler for Stage {
 
         let delta = date::now() - *time;
 
-        let radius = 10.0;
-        let camx = glm::sin(*total_time);
-        let camy = glm::cos(*total_time);
+        let pressed_keys = PRESSED_KEYS.lock().unwrap().clone();
 
-        let view = glm::ext::look_at(
-            Vec3 {x: camx as f32, y: camy as f32, z: 0.0 } * radius, 
-            Vec3 {x: 0.0, y: 0.0, z: 0.0 },
-            Vec3 {x: 0.0, y: 0.0, z: 1.0 }
-        );
+        if pressed_keys.contains(&KeyCode::W) {
+            self.world.cam.camera_pos = self.world.cam.camera_pos + 
+                (self.world.cam.camera_front * CAMERA_SPEED );
+        }
 
-         self.world.view = view;
+        if pressed_keys.contains(&KeyCode::S) {           
+            self.world.cam.camera_pos = self.world.cam.camera_pos + 
+                (-self.world.cam.camera_front * CAMERA_SPEED );
+        }
+
+        if pressed_keys.contains(&KeyCode::A) {           
+            self.world.cam.camera_pos = self.world.cam.camera_pos - 
+                glm::normalize(glm::cross(self.world.cam.camera_front, self.world.cam.camera_up)) * CAMERA_SPEED;
+        }
+
+        if pressed_keys.contains(&KeyCode::D) {           
+            self.world.cam.camera_pos = self.world.cam.camera_pos + 
+                glm::normalize(glm::cross(self.world.cam.camera_front, self.world.cam.camera_up)) * CAMERA_SPEED;
+        }
 
         *time = date::now();
         *total_time += delta;
@@ -221,7 +242,6 @@ impl EventHandler for Stage {
     }
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
-
         match _keycode {
             KeyCode::Escape => {
                 for texture in self.textures.iter_mut(){
@@ -229,32 +249,6 @@ impl EventHandler for Stage {
                 }
                 window::request_quit();
             }
-
-            KeyCode::W => {
-                self.world.view = glm::ext::translate(
-                    &self.world.view, Vec3 { x: 0.0, y: 0.0, z: 0.1 }
-                );
-            }
-
-            KeyCode::S => {           
-                self.world.view = glm::ext::translate(
-                    &self.world.view, Vec3 { x: 0.0, y: 0.0, z: -0.1 }
-                );
-            }
-
-            KeyCode::A => {           
-                self.world.view = glm::ext::translate(
-                    &self.world.view, Vec3 { x: -0.1, y: 0.0, z: 0.0 }
-                );
-            }
-
-
-            KeyCode::D => {           
-                self.world.view = glm::ext::translate(
-                    &self.world.view, Vec3 { x: 0.1, y: 0.0, z: 0.0 }
-                );
-            }
-
 
             KeyCode::Key1 => {
                 self.settings.render_wireframe = !self.settings.render_wireframe;
@@ -278,10 +272,13 @@ impl EventHandler for Stage {
             }
 
             _ => {
-                println!("Unhandled key down event {}", _keycode as u16);
-            }  
+                PRESSED_KEYS.lock().unwrap().insert(_keycode);
+            }
         }
+    }
 
+    fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
+                PRESSED_KEYS.lock().unwrap().remove(&_keycode);
     }
 
     fn draw(&mut self) {
@@ -321,11 +318,17 @@ impl EventHandler for Stage {
             Vec3 { x: -1.3, y:  1.0,z: -1.5 },
         ];
 
+        let view = glm::ext::look_at(
+            self.world.cam.camera_pos,
+            self.world.cam.camera_pos + self.world.cam.camera_front,
+            self.world.cam.camera_up,
+        );
+
         for pos in cube_pos.iter() {
             self.ctx
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
                     model: glm::ext::translate(&M4_UNIT, *pos).clone(), 
-                    view: self.world.view,
+                    view: view,
                     projection: self.world.projection,
                 }));
 
