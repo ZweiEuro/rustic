@@ -163,9 +163,6 @@ impl Stage {
             Vec3 {x: 0.0, y: -1.0, z: 0.0 }
         );
 
-        view = glm::ext::translate(&view, 
-            Vec3 {x: 0.0, y: 0.0, z: -10.0 });
-
         let perspective = glm::ext::perspective(glm::radians(45.0), 1.0 , 0.1, 100.0);
 
         Stage {
@@ -206,14 +203,20 @@ impl EventHandler for Stage {
 
         let delta = date::now() - *time;
 
+        let radius = 10.0;
+        let camx = glm::sin(*total_time);
+        let camy = glm::cos(*total_time);
 
-        self.world.model = glm::ext::rotate(&self.world.model, delta as f32 * glm::radians(50.0), Vec3 {x: 0.5, y: 1.0, z: 0.0});
+        let view = glm::ext::look_at(
+            Vec3 {x: camx as f32, y: camy as f32, z: 0.0 } * radius, 
+            Vec3 {x: 0.0, y: 0.0, z: 0.0 },
+            Vec3 {x: 0.0, y: 0.0, z: 1.0 }
+        );
+
+         self.world.view = view;
 
         *time = date::now();
         *total_time += delta;
-
-
-
 
     }
 
@@ -226,45 +229,32 @@ impl EventHandler for Stage {
                 }
                 window::request_quit();
             }
-            KeyCode::W => {           
-                self.world.model = glm::ext::translate(
-                    &self.world.model, Vec3 { x: 0.0, y: 0.1, z: 0.0 }
-                );
-            }
 
-            KeyCode::A => {           
-                self.world.model = glm::ext::translate(
-                    &self.world.model, Vec3 { x: -0.1, y: 0.0, z: 0.0 }
+            KeyCode::W => {
+                self.world.view = glm::ext::translate(
+                    &self.world.view, Vec3 { x: 0.0, y: 0.0, z: 0.1 }
                 );
             }
 
             KeyCode::S => {           
-                self.world.model = glm::ext::translate(
-                    &self.world.model, Vec3 { x: 0.0, y: -0.1, z: 0.0 }
+                self.world.view = glm::ext::translate(
+                    &self.world.view, Vec3 { x: 0.0, y: 0.0, z: -0.1 }
                 );
             }
+
+            KeyCode::A => {           
+                self.world.view = glm::ext::translate(
+                    &self.world.view, Vec3 { x: -0.1, y: 0.0, z: 0.0 }
+                );
+            }
+
 
             KeyCode::D => {           
-                self.world.model = glm::ext::translate(
-                    &self.world.model, Vec3 { x: 0.1, y: 0.0, z: 0.0 }
+                self.world.view = glm::ext::translate(
+                    &self.world.view, Vec3 { x: 0.1, y: 0.0, z: 0.0 }
                 );
             }
 
-            KeyCode::Q => {
-                self.world.view = glm::ext::rotate(
-                    &self.world.view,
-                    glm::builtin::radians(10.0),
-                    glm::vec3(0.0, 1.0, 0.0)
-                );
-            }
-
-            KeyCode::E => {
-                self.world.view = glm::ext::rotate(
-                    &self.world.view,
-                    glm::builtin::radians(-10.0),
-                    glm::vec3(0.0, 1.0, 0.0)
-                );
-            }
 
             KeyCode::Key1 => {
                 self.settings.render_wireframe = !self.settings.render_wireframe;
@@ -319,22 +309,22 @@ impl EventHandler for Stage {
 
 
         let cube_pos: [Vec3; 10] = [
-            Vec3 { x:  0.0, y:  0.0,z:  0.0 }, 
-            Vec3 { x:  2.0, y:  5.0,z: -15.0 }, 
-            Vec3 { x: -1.5, y: -2.2,z: -2.5 },  
-            Vec3 { x: -3.8, y: -2.0,z: -12.3 },  
-            Vec3 { x:  2.4, y: -0.4,z: -3.5 },  
-            Vec3 { x: -1.7, y:  3.0,z: -7.5 },  
-            Vec3 { x:  1.3, y: -2.0,z: -2.5 },  
-            Vec3 { x:  1.5, y:  2.0,z: -2.5 }, 
-            Vec3 { x:  1.5, y:  0.2,z: -1.5 }, 
+            Vec3 { x:  0.0, y:  0.0,z:  0.0 },
+            Vec3 { x:  2.0, y:  5.0,z: -15.0 },
+            Vec3 { x: -1.5, y: -2.2,z: -2.5 },
+            Vec3 { x: -3.8, y: -2.0,z: -12.3 },
+            Vec3 { x:  2.4, y: -0.4,z: -3.5 },
+            Vec3 { x: -1.7, y:  3.0,z: -7.5 },
+            Vec3 { x:  1.3, y: -2.0,z: -2.5 },
+            Vec3 { x:  1.5, y:  2.0,z: -2.5 },
+            Vec3 { x:  1.5, y:  0.2,z: -1.5 },
             Vec3 { x: -1.3, y:  1.0,z: -1.5 },
         ];
 
         for pos in cube_pos.iter() {
             self.ctx
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    model: glm::ext::translate(&self.world.model, *pos).clone(), 
+                    model: glm::ext::translate(&M4_UNIT, *pos).clone(), 
                     view: self.world.view,
                     projection: self.world.projection,
                 }));
