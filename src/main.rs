@@ -204,8 +204,6 @@ fn main() {
 
     println!("Hello world");
 
-
-
     let mut conf = conf::Conf::default();
 
     conf.platform.apple_gfx_api = conf::AppleGfxApi::OpenGl;
