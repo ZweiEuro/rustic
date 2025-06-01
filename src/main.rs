@@ -8,7 +8,7 @@ use miniquad::{
     gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES},
     *,
 };
-use stage::Camera;
+use stage::*;
 
 /**
 * General Notes:
@@ -32,53 +32,11 @@ struct Vertex {
     uv: Vec2,
 }
 
-struct Settings {
-    render_wireframe: bool,
-    debug_toggle_1: bool,
-    debug_toggle_2: bool,
-    debug_toggle_3: bool,
-    debug_toggle_4: bool,
-}
 
 const CAMERA_SPEED: f32 = 10.0;
 const MOUSE_SENSITIVITY: f32 = 0.2;
 
-struct WorldState {
-    cam: Camera,
 
-    model: glm::Mat4,
-    view: glm::Mat4,
-    projection: glm::Mat4,
-}
-
-struct Input {
-    pressed_keys: HashSet<KeyCode>,
-    pressed_mouse_buttons: HashSet<MouseButton>,
-
-    prev_mouse_location: Vec2,
-}
-struct StageMetadata {
-    last_time_update_fn_run: f64,
-    time_stage_started: f64,
-}
-
-struct Stage {
-    ctx: Box<dyn RenderingBackend>,
-
-    meta: StageMetadata,
-
-    world: WorldState,
-
-    pipeline: Pipeline,
-    bindings: Bindings,
-
-    settings: Settings,
-
-    textures: Vec<textures::Texture>,
-    shaders: Vec<shaders::Shader>,
-
-    input: Input,
-}
 
 impl Stage {
     pub fn new() -> Stage {
