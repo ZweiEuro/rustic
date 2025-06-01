@@ -1,24 +1,28 @@
-use std::{collections::HashSet, sync::{LazyLock, Mutex}};
+use std::{
+    collections::HashSet,
+    sync::{LazyLock, Mutex},
+};
 
-use glm::{Vec3, Vec2};
-use miniquad::{gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES}, *};
-
+use glm::{Vec2, Vec3};
+use miniquad::{
+    gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES},
+    *,
+};
 
 /**
 * General Notes:
 * - Not sure if mipmaps work correctly
 */
-
 mod shaders;
 mod textures;
 
+#[rustfmt::skip]
 const M4_UNIT: glm::Mat4 =  glm::Mat4 { 
     c0: glm::Vec4{ x: 1.0, y: 0.0, z: 0.0, w: 0.0},
     c1: glm::Vec4{ x: 0.0, y: 1.0, z: 0.0, w: 0.0},
     c2: glm::Vec4{ x: 0.0, y: 0.0, z: 1.0, w: 0.0},
     c3: glm::Vec4{ x: 0.0, y: 0.0, z: 0.0, w: 1.0},
 };
-
 
 #[repr(C)]
 struct Vertex {
@@ -34,21 +38,19 @@ struct Settings {
     debug_toggle_4: bool,
 }
 
-struct Camera{
+struct Camera {
     camera_pos: Vec3,
     camera_front: Vec3, // where the camera is looking at
-    camera_up: Vec3, // relative 'up' for the camera
+    camera_up: Vec3,    // relative 'up' for the camera
 }
 const CAMERA_SPEED: f32 = 0.05;
 
 struct WorldState {
-
     cam: Camera,
 
     model: glm::Mat4,
     view: glm::Mat4,
     projection: glm::Mat4,
-
 }
 
 struct Stage {
@@ -136,12 +138,8 @@ impl Stage {
         let myshader = shaders::Shader::new("basic".to_owned());
 
         let shader = ctx
-            .new_shader(
-                myshader.get_shadersource(),
-                shader::meta(),
-            )
+            .new_shader(myshader.get_shadersource(), shader::meta())
             .unwrap();
-
 
         let mut pipelineparams = PipelineParams::default();
         pipelineparams.depth_test = Comparison::Less;
@@ -154,20 +152,18 @@ impl Stage {
                 VertexAttribute::new("uv_pos", VertexFormat::Float2),
             ],
             shader,
-            pipelineparams
+            pipelineparams,
         );
-
 
         let settings = Settings {
             render_wireframe: false,
-            debug_toggle_1 : false,
-            debug_toggle_2 : false,
-            debug_toggle_3 : false,
-            debug_toggle_4 : false,
+            debug_toggle_1: false,
+            debug_toggle_2: false,
+            debug_toggle_3: false,
+            debug_toggle_4: false,
         };
 
-
-        let perspective = glm::ext::perspective(glm::radians(45.0), 1.0 , 0.1, 100.0);
+        let perspective = glm::ext::perspective(glm::radians(45.0), 1.0, 0.1, 100.0);
 
         Stage {
             pipeline,
@@ -178,28 +174,39 @@ impl Stage {
             shaders: vec![myshader],
             world: WorldState {
                 cam: Camera {
-                    camera_pos: Vec3 {x: 0.0, y: 0.0, z: 3.0},
-                    camera_front: Vec3 {x: 0.0, y: 0.0, z: -1.0},
-                    camera_up: Vec3 {x: 0.0, y: 1.0, z:0.0},
+                    camera_pos: Vec3 {
+                        x: 0.0,
+                        y: 0.0,
+                        z: 3.0,
+                    },
+                    camera_front: Vec3 {
+                        x: 0.0,
+                        y: 0.0,
+                        z: -1.0,
+                    },
+                    camera_up: Vec3 {
+                        x: 0.0,
+                        y: 1.0,
+                        z: 0.0,
+                    },
                 },
-                model: M4_UNIT.clone(), 
+                model: M4_UNIT.clone(),
                 view: M4_UNIT.clone(),
                 projection: perspective,
-            }
+            },
         }
     }
 }
 
-
-
 static LAST_TIME_UPDATED: Mutex<f64> = Mutex::new(0.0);
 static TOTAL_TIME: Mutex<f64> = Mutex::new(0.0);
 
-static PRESSED_KEYS: LazyLock<Mutex<HashSet<KeyCode>>> = LazyLock::new(|| Mutex::new(HashSet::new()));
+static PRESSED_KEYS: LazyLock<Mutex<HashSet<KeyCode>>> =
+    LazyLock::new(|| Mutex::new(HashSet::new()));
 
 impl EventHandler for Stage {
     fn update(&mut self) {
-        for  shader in  self.shaders.iter_mut(){
+        for shader in self.shaders.iter_mut() {
             if shader.reload_if_needed() {
                 // println!("reload!");
             }
@@ -216,35 +223,53 @@ impl EventHandler for Stage {
 
         let pressed_keys = PRESSED_KEYS.lock().unwrap().clone();
 
+        // forward and back
         if pressed_keys.contains(&KeyCode::W) {
-            self.world.cam.camera_pos = self.world.cam.camera_pos + 
-                (self.world.cam.camera_front * CAMERA_SPEED );
+            self.world.cam.camera_pos =
+                self.world.cam.camera_pos + (self.world.cam.camera_front * CAMERA_SPEED);
         }
 
-        if pressed_keys.contains(&KeyCode::S) {           
-            self.world.cam.camera_pos = self.world.cam.camera_pos + 
-                (-self.world.cam.camera_front * CAMERA_SPEED );
+        if pressed_keys.contains(&KeyCode::S) {
+            self.world.cam.camera_pos =
+                self.world.cam.camera_pos + (-self.world.cam.camera_front * CAMERA_SPEED);
         }
 
-        if pressed_keys.contains(&KeyCode::A) {           
-            self.world.cam.camera_pos = self.world.cam.camera_pos - 
-                glm::normalize(glm::cross(self.world.cam.camera_front, self.world.cam.camera_up)) * CAMERA_SPEED;
+        // left and right
+        if pressed_keys.contains(&KeyCode::A) {
+            self.world.cam.camera_pos = self.world.cam.camera_pos
+                - glm::normalize(glm::cross(
+                    self.world.cam.camera_front,
+                    self.world.cam.camera_up,
+                )) * CAMERA_SPEED;
         }
 
-        if pressed_keys.contains(&KeyCode::D) {           
-            self.world.cam.camera_pos = self.world.cam.camera_pos + 
-                glm::normalize(glm::cross(self.world.cam.camera_front, self.world.cam.camera_up)) * CAMERA_SPEED;
+        if pressed_keys.contains(&KeyCode::D) {
+            self.world.cam.camera_pos = self.world.cam.camera_pos
+                + glm::normalize(glm::cross(
+                    self.world.cam.camera_front,
+                    self.world.cam.camera_up,
+                )) * CAMERA_SPEED;
+        }
+
+        // up and down
+        if pressed_keys.contains(&KeyCode::Space) {
+            self.world.cam.camera_pos =
+                self.world.cam.camera_pos + self.world.cam.camera_up * CAMERA_SPEED;
+        }
+
+        if pressed_keys.contains(&KeyCode::LeftShift) {
+            self.world.cam.camera_pos =
+                self.world.cam.camera_pos - self.world.cam.camera_up * CAMERA_SPEED;
         }
 
         *time = date::now();
         *total_time += delta;
-
     }
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
         match _keycode {
             KeyCode::Escape => {
-                for texture in self.textures.iter_mut(){
+                for texture in self.textures.iter_mut() {
                     texture.delete_texture(&mut self.ctx);
                 }
                 window::request_quit();
@@ -258,7 +283,7 @@ impl EventHandler for Stage {
 
             KeyCode::Key2 => {
                 self.settings.debug_toggle_2 = !self.settings.debug_toggle_2;
-                println!("toggled debug 2"); 
+                println!("toggled debug 2");
             }
 
             KeyCode::Key3 => {
@@ -278,25 +303,23 @@ impl EventHandler for Stage {
     }
 
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
-                PRESSED_KEYS.lock().unwrap().remove(&_keycode);
+        PRESSED_KEYS.lock().unwrap().remove(&_keycode);
     }
 
     fn draw(&mut self) {
-
         self.ctx.begin_default_pass(Default::default());
 
         unsafe {
             gl::glEnable(GL_DEPTH_BUFFER_BIT);
         }
 
-        self.ctx.clear(Some((0.0,0.0,0.0,0.0)), Some(1.0), None);
+        self.ctx.clear(Some((0.0, 0.0, 0.0, 0.0)), Some(1.0), None);
 
-
-        unsafe{
+        unsafe {
             // toggle the wireframe rendering by changing the gl polygon format
             if self.settings.render_wireframe {
                 raw_gl::glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            }else {
+            } else {
                 raw_gl::glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
         }
@@ -304,7 +327,7 @@ impl EventHandler for Stage {
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
 
-
+        #[rustfmt::skip]
         let cube_pos: [Vec3; 10] = [
             Vec3 { x:  0.0, y:  0.0,z:  0.0 },
             Vec3 { x:  2.0, y:  5.0,z: -15.0 },
@@ -327,7 +350,7 @@ impl EventHandler for Stage {
         for pos in cube_pos.iter() {
             self.ctx
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    model: glm::ext::translate(&M4_UNIT, *pos).clone(), 
+                    model: glm::ext::translate(&M4_UNIT, *pos).clone(),
                     view: view,
                     projection: self.world.projection,
                 }));
@@ -337,7 +360,6 @@ impl EventHandler for Stage {
             }
         }
 
-
         self.ctx.end_render_pass();
 
         self.ctx.commit_frame();
@@ -345,7 +367,6 @@ impl EventHandler for Stage {
 }
 
 fn main() {
-
     println!("Hello world");
 
     let mut conf = conf::Conf::default();
@@ -381,5 +402,3 @@ mod shader {
         pub projection: Mat4,
     }
 }
-
-
