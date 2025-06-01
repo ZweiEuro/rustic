@@ -1,5 +1,7 @@
+use std::sync::Mutex;
+
 use glm::{Vec3, Vec2};
-use miniquad::{gl::{GL_FILL, GL_FRONT_AND_BACK, GL_LINE}, *};
+use miniquad::{gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES}, *};
 
 
 /**
@@ -20,7 +22,7 @@ const M4_UNIT: glm::Mat4 =  glm::Mat4 {
 
 #[repr(C)]
 struct Vertex {
-    pos: Vec2,
+    pos: Vec3,
     uv: Vec2,
 }
 
@@ -59,11 +61,43 @@ impl Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
         #[rustfmt::skip]
-        let vertices: [Vertex; 4] = [
-            Vertex { pos : Vec2 { x: -0.5, y: -0.5 }, uv: Vec2 { x: 0., y: 0. } },
-            Vertex { pos : Vec2 { x:  0.5, y: -0.5 }, uv: Vec2 { x: 1., y: 0. } },
-            Vertex { pos : Vec2 { x:  0.5, y:  0.5 }, uv: Vec2 { x: 1., y: 1. } },
-            Vertex { pos : Vec2 { x: -0.5, y:  0.5 }, uv: Vec2 { x: 0., y: 1. } },
+        let vertices: [Vertex; 36] = [
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
+            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
+            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
+            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
         ];
 
         let vertex_buffer = ctx.new_buffer(
@@ -99,14 +133,19 @@ impl Stage {
             )
             .unwrap();
 
+
+        let mut pipelineparams = PipelineParams::default();
+        pipelineparams.depth_test = Comparison::Less;
+        pipelineparams.depth_write = true;
+
         let pipeline = ctx.new_pipeline(
             &[BufferLayout::default()],
             &[
-                VertexAttribute::new("in_pos", VertexFormat::Float2),
+                VertexAttribute::new("in_pos", VertexFormat::Float3),
                 VertexAttribute::new("uv_pos", VertexFormat::Float2),
             ],
             shader,
-            PipelineParams::default(),
+            pipelineparams
         );
 
 
@@ -118,6 +157,11 @@ impl Stage {
             debug_toggle_4 : false,
         };
 
+        let view = glm::ext::look_at(
+            Vec3 {x: 0.0, y: 0.0, z: 3.0 }, 
+            Vec3 {x: 0.0, y: 0.0, z: 0.0 },
+            Vec3 {x: 0.0, y: 1.0, z: 0.0 }
+        );
 
         Stage {
             pipeline,
@@ -137,14 +181,35 @@ impl Stage {
 
 
 
+static LAST_TIME_UPDATED: Mutex<f64> = Mutex::new(0.0);
+static TOTAL_TIME: Mutex<f64> = Mutex::new(0.0);
 
 impl EventHandler for Stage {
     fn update(&mut self) {
         for  shader in  self.shaders.iter_mut(){
             if shader.reload_if_needed() {
-               // println!("reload!");
+                // println!("reload!");
             }
         }
+
+        let mut time = LAST_TIME_UPDATED.lock().unwrap();
+        let mut total_time = TOTAL_TIME.lock().unwrap();
+
+        if *time == 0.0 {
+            *time = date::now();
+        }
+
+        let delta = date::now() - *time;
+
+
+        self.world.model = glm::ext::rotate(&self.world.model, delta as f32 * glm::radians(50.0), Vec3 {x: 0.5, y: 1.0, z: 0.0});
+
+        *time = date::now();
+        *total_time += delta;
+
+
+
+
     }
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
@@ -184,7 +249,7 @@ impl EventHandler for Stage {
                 self.world.view = glm::ext::rotate(
                     &self.world.view,
                     glm::builtin::radians(10.0),
-                    glm::vec3(0.0, 0.0, 1.0)
+                    glm::vec3(0.0, 1.0, 0.0)
                 );
             }
            
@@ -192,7 +257,7 @@ impl EventHandler for Stage {
                 self.world.view = glm::ext::rotate(
                     &self.world.view,
                     glm::builtin::radians(-10.0),
-                    glm::vec3(0.0, 0.0, 1.0)
+                    glm::vec3(0.0, 1.0, 0.0)
                 );
             }
 
@@ -228,10 +293,15 @@ impl EventHandler for Stage {
 
         self.ctx.begin_default_pass(Default::default());
 
-        self.ctx.clear(Some((0.0,0.0,0.0,0.0)), None, None);
+        unsafe {
+            gl::glEnable(GL_DEPTH_BUFFER_BIT);
+        }
+
+        self.ctx.clear(Some((0.0,0.0,0.0,0.0)), Some(1000.0), None);
 
 
         unsafe{
+gl::glClearDepth(1.0);
             // toggle the wireframe rendering by changing the gl polygon format
             if self.settings.render_wireframe {
                 raw_gl::glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -250,7 +320,10 @@ impl EventHandler for Stage {
                 projection: self.world.projection,
             }));
 
-        self.ctx.draw(0, 6, 1);
+        unsafe {
+            gl::glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
         self.ctx.end_render_pass();
 
         self.ctx.commit_frame();
