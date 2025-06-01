@@ -3,7 +3,7 @@ use std::{
     sync::{LazyLock, Mutex},
 };
 
-use glm::{Vec2, Vec3};
+use glm::{Vec2, Vec3, radians};
 use miniquad::{
     gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES},
     *,
@@ -42,8 +42,13 @@ struct Camera {
     camera_pos: Vec3,
     camera_front: Vec3, // where the camera is looking at
     camera_up: Vec3,    // relative 'up' for the camera
+
+    pitch: f32,
+    yaw: f32,
 }
+
 const CAMERA_SPEED: f32 = 0.05;
+const MOUSE_SENSITIVITY: f32 = 0.5;
 
 struct WorldState {
     cam: Camera,
@@ -70,6 +75,9 @@ struct Stage {
 impl Stage {
     pub fn new() -> Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
+
+        miniquad::window::show_mouse(false);
+        miniquad::window::set_cursor_grab(true);
 
         #[rustfmt::skip]
         let vertices: [Vertex; 36] = [
@@ -177,7 +185,7 @@ impl Stage {
                     camera_pos: Vec3 {
                         x: 0.0,
                         y: 0.0,
-                        z: 3.0,
+                        z: 50.0,
                     },
                     camera_front: Vec3 {
                         x: 0.0,
@@ -189,6 +197,9 @@ impl Stage {
                         y: 1.0,
                         z: 0.0,
                     },
+
+                    pitch: 0.0,
+                    yaw: 0.0,
                 },
                 model: M4_UNIT.clone(),
                 view: M4_UNIT.clone(),
@@ -267,6 +278,8 @@ impl EventHandler for Stage {
     }
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
+        // put all the pressed keys in a set so we can check em later if they are pressed down or
+        // not, remove them from the set when they are released
         match _keycode {
             KeyCode::Escape => {
                 for texture in self.textures.iter_mut() {
@@ -304,6 +317,35 @@ impl EventHandler for Stage {
 
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
         PRESSED_KEYS.lock().unwrap().remove(&_keycode);
+    }
+
+    fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
+        static PREV_POW: Mutex<Vec2> = Mutex::new(Vec2 { x: 0.0, y: 0.0 });
+
+        // inverse y since the mouse position is top-left 0.0
+        // but we want it in "screen space" which means 0.0 is bottom left
+        let new_position = Vec2 { x: _x, y: -_y };
+
+        let delta = (new_position - *PREV_POW.lock().unwrap()) * MOUSE_SENSITIVITY;
+
+        *PREV_POW.lock().unwrap() = new_position;
+
+        if delta.x == 0.0 && delta.y == 0.0 {
+            return;
+        }
+
+        self.world.cam.yaw += delta.x;
+        self.world.cam.pitch += delta.y;
+
+        self.world.cam.pitch = self.world.cam.pitch.clamp(-89.0, 89.0);
+
+        let direction = Vec3 {
+            x: glm::cos(radians(self.world.cam.yaw)) * glm::cos(glm::radians(self.world.cam.pitch)),
+            y: glm::sin(glm::radians(self.world.cam.pitch)),
+            z: glm::sin(radians(self.world.cam.yaw)) * glm::cos(glm::radians(self.world.cam.pitch)),
+        };
+
+        self.world.cam.camera_front = glm::normalize(direction);
     }
 
     fn draw(&mut self) {
@@ -370,7 +412,6 @@ fn main() {
     println!("Hello world");
 
     let mut conf = conf::Conf::default();
-
     conf.platform.apple_gfx_api = conf::AppleGfxApi::OpenGl;
     conf.window_height = 600;
     conf.window_width = 600;
