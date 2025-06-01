@@ -48,7 +48,7 @@ struct Camera {
 }
 
 const CAMERA_SPEED: f32 = 0.05;
-const MOUSE_SENSITIVITY: f32 = 0.5;
+const MOUSE_SENSITIVITY: f32 = 0.2;
 
 struct WorldState {
     cam: Camera,
@@ -56,6 +56,13 @@ struct WorldState {
     model: glm::Mat4,
     view: glm::Mat4,
     projection: glm::Mat4,
+}
+
+struct Input {
+    pressed_keys: HashSet<KeyCode>,
+    pressed_mouse_buttons: HashSet<MouseButton>,
+
+    prev_mouse_location: Vec2,
 }
 
 struct Stage {
@@ -70,14 +77,13 @@ struct Stage {
 
     textures: Vec<textures::Texture>,
     shaders: Vec<shaders::Shader>,
+
+    input: Input,
 }
 
 impl Stage {
     pub fn new() -> Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
-
-        miniquad::window::show_mouse(false);
-        miniquad::window::set_cursor_grab(true);
 
         #[rustfmt::skip]
         let vertices: [Vertex; 36] = [
@@ -180,12 +186,17 @@ impl Stage {
             settings,
             textures: vec![texture],
             shaders: vec![myshader],
+            input: Input {
+                pressed_keys: HashSet::new(),
+                pressed_mouse_buttons: HashSet::new(),
+                prev_mouse_location: Vec2 { x: 0.0, y: 0.0 },
+            },
             world: WorldState {
                 cam: Camera {
                     camera_pos: Vec3 {
                         x: 0.0,
                         y: 0.0,
-                        z: 50.0,
+                        z: 10.0,
                     },
                     camera_front: Vec3 {
                         x: 0.0,
@@ -199,7 +210,7 @@ impl Stage {
                     },
 
                     pitch: 0.0,
-                    yaw: 0.0,
+                    yaw: -90.0,
                 },
                 model: M4_UNIT.clone(),
                 view: M4_UNIT.clone(),
@@ -211,9 +222,6 @@ impl Stage {
 
 static LAST_TIME_UPDATED: Mutex<f64> = Mutex::new(0.0);
 static TOTAL_TIME: Mutex<f64> = Mutex::new(0.0);
-
-static PRESSED_KEYS: LazyLock<Mutex<HashSet<KeyCode>>> =
-    LazyLock::new(|| Mutex::new(HashSet::new()));
 
 impl EventHandler for Stage {
     fn update(&mut self) {
@@ -232,7 +240,7 @@ impl EventHandler for Stage {
 
         let delta = date::now() - *time;
 
-        let pressed_keys = PRESSED_KEYS.lock().unwrap().clone();
+        let pressed_keys = self.input.pressed_keys.clone();
 
         // forward and back
         if pressed_keys.contains(&KeyCode::W) {
@@ -310,25 +318,42 @@ impl EventHandler for Stage {
             }
 
             _ => {
-                PRESSED_KEYS.lock().unwrap().insert(_keycode);
+                self.input.pressed_keys.insert(_keycode);
             }
         }
     }
 
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
-        PRESSED_KEYS.lock().unwrap().remove(&_keycode);
+        self.input.pressed_keys.remove(&_keycode);
+    }
+
+    fn mouse_button_down_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
+        self.input.pressed_mouse_buttons.insert(_button);
+        println!("button down at {:?}", self.input.prev_mouse_location);
+    }
+
+    fn mouse_button_up_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
+        self.input.pressed_mouse_buttons.remove(&_button);
     }
 
     fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
-        static PREV_POW: Mutex<Vec2> = Mutex::new(Vec2 { x: 0.0, y: 0.0 });
+        if !self
+            .input
+            .pressed_mouse_buttons
+            .contains(&MouseButton::Left)
+        {
+            // nothing to do per se
+            self.input.prev_mouse_location = Vec2 { x: _x, y: -_y };
+            return;
+        }
 
         // inverse y since the mouse position is top-left 0.0
         // but we want it in "screen space" which means 0.0 is bottom left
         let new_position = Vec2 { x: _x, y: -_y };
 
-        let delta = (new_position - *PREV_POW.lock().unwrap()) * MOUSE_SENSITIVITY;
+        let delta = (new_position - self.input.prev_mouse_location) * MOUSE_SENSITIVITY;
 
-        *PREV_POW.lock().unwrap() = new_position;
+        self.input.prev_mouse_location = new_position;
 
         if delta.x == 0.0 && delta.y == 0.0 {
             return;
