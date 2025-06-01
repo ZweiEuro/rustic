@@ -1,7 +1,11 @@
 use miniquad::{gl::{GL_FILL, GL_FRONT_AND_BACK, GL_LINE}, *};
-use sdl3::libc::printf;
 use std::{panic, sync::Mutex, time::{Duration, SystemTime}};
 
+
+/**
+* General Notes:
+* - Not sure if mipmaps work correctly
+*/
 
 mod shaders;
 mod textures;
@@ -32,9 +36,15 @@ struct Settings {
     debug_toggle_4: bool,
 }
 
+struct WorldState {
+    camera_rotation: f32,
+}
+
 struct Stage {
     ctx: Box<dyn RenderingBackend>,
 
+    world: WorldState,
+    
     pipeline: Pipeline,
     bindings: Bindings,
 
@@ -55,6 +65,12 @@ impl Stage {
             Vertex { pos : Vec2 { x:  0.5, y:  0.5 }, uv: Vec2 { x: 1., y: 1. } },
             Vertex { pos : Vec2 { x: -0.5, y:  0.5 }, uv: Vec2 { x: 0., y: 1. } },
         ];
+
+
+
+
+
+
         let vertex_buffer = ctx.new_buffer(
             BufferType::VertexBuffer,
             BufferUsage::Immutable,
@@ -115,6 +131,7 @@ impl Stage {
             settings,
             textures: vec![texture],
             shaders: vec![myshader],
+            world: WorldState { camera_rotation: 0.0 }
         }
     }
 }
@@ -148,11 +165,13 @@ impl EventHandler for Stage {
             KeyCode::Key1 => {
                 self.settings.debug_toggle_1 = !self.settings.debug_toggle_1;
                 println!("toggled debug 1");
+                self.world.camera_rotation += 90.0;
             }
 
             KeyCode::Key2 => {
                 self.settings.debug_toggle_2 = !self.settings.debug_toggle_2;
                 println!("toggled debug 2");
+                self.world.camera_rotation -= 90.0;
             }
 
             KeyCode::Key3 => {
@@ -179,7 +198,6 @@ impl EventHandler for Stage {
         self.ctx.clear(Some((0.0,0.0,0.0,0.0)), None, None);
 
 
-
         unsafe{
             // toggle the wireframe rendering by changing the gl polygon format
             if self.settings.render_wireframe {
@@ -192,6 +210,24 @@ impl EventHandler for Stage {
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
 
+        #[rustfmt::skip]
+        let rotation_matrix =  glm::mat4( 
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        );
+
+        let rotation_matrix = glm::ext::rotate(
+            &rotation_matrix,
+            glm::builtin::radians(self.world.camera_rotation),
+            glm::vec3(0.0, 0.0, 1.0)
+        );
+
+        self.ctx
+            .apply_uniforms(UniformsSource::table(&shader::Uniforms {
+                camera_rotation: rotation_matrix
+            }));
 
         self.ctx.draw(0, 6, 1);
         self.ctx.end_render_pass();
@@ -216,17 +252,19 @@ fn main() {
 }
 
 mod shader {
+    use glm::Mat4;
     use miniquad::*;
     pub fn meta() -> ShaderMeta {
         ShaderMeta {
             images: vec!["tex".to_string()],
             uniforms: UniformBlockLayout {
-                uniforms: vec![],
+                uniforms: vec![UniformDesc::new("camera_rotation", UniformType::Mat4)],
             },
         }
     }
     #[repr(C)]
     pub struct Uniforms {
+        pub camera_rotation: Mat4
     }
 }
 
