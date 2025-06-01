@@ -46,7 +46,7 @@ struct Stage {
     ctx: Box<dyn RenderingBackend>,
 
     world: WorldState,
-    
+
     pipeline: Pipeline,
     bindings: Bindings,
 
@@ -117,7 +117,7 @@ impl Stage {
 
         let texture_id = texture.get_texture_id(&mut ctx);
         ctx.texture_set_filter(texture_id, FilterMode::Nearest, MipmapFilterMode::None);
-       
+
         let bindings = Bindings {
             vertex_buffers: vec![vertex_buffer],
             index_buffer: index_buffer,
@@ -232,13 +232,13 @@ impl EventHandler for Stage {
                     &self.world.model, Vec3 { x: -0.1, y: 0.0, z: 0.0 }
                 );
             }
-            
+
             KeyCode::S => {           
                 self.world.model = glm::ext::translate(
                     &self.world.model, Vec3 { x: 0.0, y: -0.1, z: 0.0 }
                 );
             }
-           
+
             KeyCode::D => {           
                 self.world.model = glm::ext::translate(
                     &self.world.model, Vec3 { x: 0.1, y: 0.0, z: 0.0 }
@@ -252,7 +252,7 @@ impl EventHandler for Stage {
                     glm::vec3(0.0, 1.0, 0.0)
                 );
             }
-           
+
             KeyCode::E => {
                 self.world.view = glm::ext::rotate(
                     &self.world.view,
@@ -297,11 +297,10 @@ impl EventHandler for Stage {
             gl::glEnable(GL_DEPTH_BUFFER_BIT);
         }
 
-        self.ctx.clear(Some((0.0,0.0,0.0,0.0)), Some(1000.0), None);
+        self.ctx.clear(Some((0.0,0.0,0.0,0.0)), Some(1.0), None);
 
 
         unsafe{
-gl::glClearDepth(1.0);
             // toggle the wireframe rendering by changing the gl polygon format
             if self.settings.render_wireframe {
                 raw_gl::glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
