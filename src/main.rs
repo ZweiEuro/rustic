@@ -40,7 +40,7 @@ struct Settings {
     debug_toggle_4: bool,
 }
 
-const CAMERA_SPEED: f32 = 0.05;
+const CAMERA_SPEED: f32 = 10.0;
 const MOUSE_SENSITIVITY: f32 = 0.2;
 
 struct WorldState {
@@ -57,9 +57,15 @@ struct Input {
 
     prev_mouse_location: Vec2,
 }
+struct StageMetadata {
+    last_time_update_fn_run: f64,
+    time_stage_started: f64,
+}
 
 struct Stage {
     ctx: Box<dyn RenderingBackend>,
+
+    meta: StageMetadata,
 
     world: WorldState,
 
@@ -209,12 +215,13 @@ impl Stage {
                 view: M4_UNIT.clone(),
                 projection: perspective,
             },
+            meta: StageMetadata {
+                last_time_update_fn_run: date::now(),
+                time_stage_started: date::now(),
+            },
         }
     }
 }
-
-static LAST_TIME_UPDATED: Mutex<f64> = Mutex::new(0.0);
-static TOTAL_TIME: Mutex<f64> = Mutex::new(0.0);
 
 impl EventHandler for Stage {
     fn update(&mut self) {
@@ -224,46 +231,38 @@ impl EventHandler for Stage {
             }
         }
 
-        let mut time = LAST_TIME_UPDATED.lock().unwrap();
-        let mut total_time = TOTAL_TIME.lock().unwrap();
-
-        if *time == 0.0 {
-            *time = date::now();
-        }
-
-        let delta = date::now() - *time;
+        let delta = date::now() - self.meta.last_time_update_fn_run;
 
         let pressed_keys = self.input.pressed_keys.clone();
 
         // forward and back
         if pressed_keys.contains(&KeyCode::W) {
-            self.world.cam.move_forward(CAMERA_SPEED);
+            self.world.cam.move_forward(CAMERA_SPEED * delta as f32);
         }
 
         if pressed_keys.contains(&KeyCode::S) {
-            self.world.cam.move_backwards(CAMERA_SPEED);
+            self.world.cam.move_backwards(CAMERA_SPEED * delta as f32);
         }
 
         // left and right
         if pressed_keys.contains(&KeyCode::A) {
-            self.world.cam.move_left(CAMERA_SPEED);
+            self.world.cam.move_left(CAMERA_SPEED * delta as f32);
         }
 
         if pressed_keys.contains(&KeyCode::D) {
-            self.world.cam.move_right(CAMERA_SPEED);
+            self.world.cam.move_right(CAMERA_SPEED * delta as f32);
         }
 
         // up and down
         if pressed_keys.contains(&KeyCode::Space) {
-            self.world.cam.move_up(CAMERA_SPEED);
+            self.world.cam.move_up(CAMERA_SPEED * delta as f32);
         }
 
-        if pressed_keys.contains(&KeyCode::LeftShift) {
-            self.world.cam.move_down(CAMERA_SPEED);
+        if pressed_keys.contains(&KeyCode::C) {
+            self.world.cam.move_down(CAMERA_SPEED * delta as f32);
         }
 
-        *time = date::now();
-        *total_time += delta;
+        self.meta.last_time_update_fn_run = date::now();
     }
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
@@ -340,18 +339,7 @@ impl EventHandler for Stage {
             return;
         }
 
-        self.world.cam.yaw += delta.x;
-        self.world.cam.pitch += delta.y;
-
-        self.world.cam.pitch = self.world.cam.pitch.clamp(-89.0, 89.0);
-
-        let direction = Vec3 {
-            x: glm::cos(radians(self.world.cam.yaw)) * glm::cos(glm::radians(self.world.cam.pitch)),
-            y: glm::sin(glm::radians(self.world.cam.pitch)),
-            z: glm::sin(radians(self.world.cam.yaw)) * glm::cos(glm::radians(self.world.cam.pitch)),
-        };
-
-        self.world.cam.camera_front = glm::normalize(direction);
+        self.world.cam.change_pitch_yaw(delta.x, delta.y);
     }
 
     fn draw(&mut self) {
@@ -389,17 +377,11 @@ impl EventHandler for Stage {
             Vec3 { x: -1.3, y:  1.0,z: -1.5 },
         ];
 
-        let view = glm::ext::look_at(
-            self.world.cam.camera_pos,
-            self.world.cam.camera_pos + self.world.cam.camera_front,
-            self.world.cam.camera_up,
-        );
-
         for pos in cube_pos.iter() {
             self.ctx
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
                     model: glm::ext::translate(&M4_UNIT, *pos).clone(),
-                    view: view,
+                    view: self.world.cam.get_view_matrix(),
                     projection: self.world.projection,
                 }));
 
