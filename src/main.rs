@@ -8,12 +8,14 @@ use miniquad::{
     gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES},
     *,
 };
+use stage::Camera;
 
 /**
 * General Notes:
 * - Not sure if mipmaps work correctly
 */
 mod shaders;
+mod stage;
 mod textures;
 
 #[rustfmt::skip]
@@ -36,15 +38,6 @@ struct Settings {
     debug_toggle_2: bool,
     debug_toggle_3: bool,
     debug_toggle_4: bool,
-}
-
-struct Camera {
-    camera_pos: Vec3,
-    camera_front: Vec3, // where the camera is looking at
-    camera_up: Vec3,    // relative 'up' for the camera
-
-    pitch: f32,
-    yaw: f32,
 }
 
 const CAMERA_SPEED: f32 = 0.05;
@@ -244,41 +237,29 @@ impl EventHandler for Stage {
 
         // forward and back
         if pressed_keys.contains(&KeyCode::W) {
-            self.world.cam.camera_pos =
-                self.world.cam.camera_pos + (self.world.cam.camera_front * CAMERA_SPEED);
+            self.world.cam.move_forward(CAMERA_SPEED);
         }
 
         if pressed_keys.contains(&KeyCode::S) {
-            self.world.cam.camera_pos =
-                self.world.cam.camera_pos + (-self.world.cam.camera_front * CAMERA_SPEED);
+            self.world.cam.move_backwards(CAMERA_SPEED);
         }
 
         // left and right
         if pressed_keys.contains(&KeyCode::A) {
-            self.world.cam.camera_pos = self.world.cam.camera_pos
-                - glm::normalize(glm::cross(
-                    self.world.cam.camera_front,
-                    self.world.cam.camera_up,
-                )) * CAMERA_SPEED;
+            self.world.cam.move_left(CAMERA_SPEED);
         }
 
         if pressed_keys.contains(&KeyCode::D) {
-            self.world.cam.camera_pos = self.world.cam.camera_pos
-                + glm::normalize(glm::cross(
-                    self.world.cam.camera_front,
-                    self.world.cam.camera_up,
-                )) * CAMERA_SPEED;
+            self.world.cam.move_right(CAMERA_SPEED);
         }
 
         // up and down
         if pressed_keys.contains(&KeyCode::Space) {
-            self.world.cam.camera_pos =
-                self.world.cam.camera_pos + self.world.cam.camera_up * CAMERA_SPEED;
+            self.world.cam.move_up(CAMERA_SPEED);
         }
 
         if pressed_keys.contains(&KeyCode::LeftShift) {
-            self.world.cam.camera_pos =
-                self.world.cam.camera_pos - self.world.cam.camera_up * CAMERA_SPEED;
+            self.world.cam.move_down(CAMERA_SPEED);
         }
 
         *time = date::now();
