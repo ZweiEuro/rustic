@@ -157,11 +157,16 @@ impl Stage {
             debug_toggle_4 : false,
         };
 
-        let view = glm::ext::look_at(
-            Vec3 {x: 0.0, y: 0.0, z: 3.0 }, 
+        let  mut view = glm::ext::look_at(
+            Vec3 {x: 0.0, y: 0.0, z: 1.0 }, 
             Vec3 {x: 0.0, y: 0.0, z: 0.0 },
-            Vec3 {x: 0.0, y: 1.0, z: 0.0 }
+            Vec3 {x: 0.0, y: -1.0, z: 0.0 }
         );
+
+        view = glm::ext::translate(&view, 
+            Vec3 {x: 0.0, y: 0.0, z: -10.0 });
+
+        let perspective = glm::ext::perspective(glm::radians(45.0), 1.0 , 0.1, 100.0);
 
         Stage {
             pipeline,
@@ -172,8 +177,8 @@ impl Stage {
             shaders: vec![myshader],
             world: WorldState {
                 model: M4_UNIT.clone(), 
-                view: M4_UNIT.clone(), 
-                projection: M4_UNIT.clone(), 
+                view: view.clone(),
+                projection: perspective
             }
         }
     }
@@ -312,16 +317,33 @@ impl EventHandler for Stage {
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
 
-        self.ctx
-            .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                model: self.world.model,
-                view: self.world.view,
-                projection: self.world.projection,
-            }));
 
-        unsafe {
-            gl::glDrawArrays(GL_TRIANGLES, 0, 36);
+        let cube_pos: [Vec3; 10] = [
+            Vec3 { x:  0.0, y:  0.0,z:  0.0 }, 
+            Vec3 { x:  2.0, y:  5.0,z: -15.0 }, 
+            Vec3 { x: -1.5, y: -2.2,z: -2.5 },  
+            Vec3 { x: -3.8, y: -2.0,z: -12.3 },  
+            Vec3 { x:  2.4, y: -0.4,z: -3.5 },  
+            Vec3 { x: -1.7, y:  3.0,z: -7.5 },  
+            Vec3 { x:  1.3, y: -2.0,z: -2.5 },  
+            Vec3 { x:  1.5, y:  2.0,z: -2.5 }, 
+            Vec3 { x:  1.5, y:  0.2,z: -1.5 }, 
+            Vec3 { x: -1.3, y:  1.0,z: -1.5 },
+        ];
+
+        for pos in cube_pos.iter() {
+            self.ctx
+                .apply_uniforms(UniformsSource::table(&shader::Uniforms {
+                    model: glm::ext::translate(&self.world.model, *pos).clone(), 
+                    view: self.world.view,
+                    projection: self.world.projection,
+                }));
+
+            unsafe {
+                gl::glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
         }
+
 
         self.ctx.end_render_pass();
 
