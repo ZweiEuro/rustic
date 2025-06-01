@@ -1,6 +1,5 @@
-use glm::vec3;
+use glm::{vec3, Vec3, Vec2};
 use miniquad::{gl::{GL_FILL, GL_FRONT_AND_BACK, GL_LINE}, *};
-use std::{panic, sync::Mutex, time::{Duration, SystemTime}};
 
 
 /**
@@ -11,18 +10,14 @@ use std::{panic, sync::Mutex, time::{Duration, SystemTime}};
 mod shaders;
 mod textures;
 
-#[repr(C)]
-struct Vec2 {
-    x: f32,
-    y: f32,
-}
+const M4_UNIT: glm::Mat4 =  glm::Mat4 { 
+    c0: glm::Vec4{ x: 1.0, y: 0.0, z: 0.0, w: 0.0},
+    c1: glm::Vec4{ x: 0.0, y: 1.0, z: 0.0, w: 0.0},
+    c2: glm::Vec4{ x: 0.0, y: 0.0, z: 1.0, w: 0.0},
+    c3: glm::Vec4{ x: 0.0, y: 0.0, z: 0.0, w: 1.0},
+};
 
-#[repr(C)]
-struct Vec3 {
-    x: f32,
-    y: f32,
-    z: f32,
-}
+
 #[repr(C)]
 struct Vertex {
     pos: Vec2,
@@ -38,8 +33,11 @@ struct Settings {
 }
 
 struct WorldState {
-    camera_rotation: f32,
-    camera_distance: f32,
+
+    model: glm::Mat4,
+    view: glm::Mat4,
+    projection: glm::Mat4,
+
 }
 
 struct Stage {
@@ -128,7 +126,11 @@ impl Stage {
             settings,
             textures: vec![texture],
             shaders: vec![myshader],
-            world: WorldState { camera_rotation: 0.0, camera_distance: 0.0 }
+            world: WorldState {
+                model: M4_UNIT.clone(), 
+                view: M4_UNIT.clone(), 
+                projection: M4_UNIT.clone(), 
+            }
         }
     }
 }
@@ -154,21 +156,55 @@ impl EventHandler for Stage {
                 }
                 window::request_quit();
             }
-            KeyCode::W => {
-                self.settings.render_wireframe = !self.settings.render_wireframe;
-                println!("Toggle wireframe {}", self.settings.render_wireframe);
+            KeyCode::W => {           
+                self.world.model = glm::ext::translate(
+                    &self.world.model, Vec3 { x: 0.0, y: 0.1, z: 0.0 }
+                );
+            }
+
+            KeyCode::A => {           
+                self.world.model = glm::ext::translate(
+                    &self.world.model, Vec3 { x: -0.1, y: 0.0, z: 0.0 }
+                );
+            }
+            
+            KeyCode::S => {           
+                self.world.model = glm::ext::translate(
+                    &self.world.model, Vec3 { x: 0.0, y: -0.1, z: 0.0 }
+                );
+            }
+           
+            KeyCode::D => {           
+                self.world.model = glm::ext::translate(
+                    &self.world.model, Vec3 { x: 0.1, y: 0.0, z: 0.0 }
+                );
+            }
+
+            KeyCode::Q => {
+                self.world.view = glm::ext::rotate(
+                    &self.world.view,
+                    glm::builtin::radians(10.0),
+                    glm::vec3(0.0, 0.0, 1.0)
+                );
+            }
+           
+            KeyCode::E => {
+                self.world.view = glm::ext::rotate(
+                    &self.world.view,
+                    glm::builtin::radians(-10.0),
+                    glm::vec3(0.0, 0.0, 1.0)
+                );
             }
 
             KeyCode::Key1 => {
+                self.settings.render_wireframe = !self.settings.render_wireframe;
                 self.settings.debug_toggle_1 = !self.settings.debug_toggle_1;
-                println!("toggled debug 1");
-                self.world.camera_rotation += 90.0;
+                println!("Toggle wireframe {}", self.settings.render_wireframe);
             }
 
             KeyCode::Key2 => {
                 self.settings.debug_toggle_2 = !self.settings.debug_toggle_2;
-                println!("toggled debug 2");
-                self.world.camera_distance -= 1.0;
+                println!("toggled debug 2"); 
             }
 
             KeyCode::Key3 => {
@@ -207,28 +243,11 @@ impl EventHandler for Stage {
         self.ctx.apply_pipeline(&self.pipeline);
         self.ctx.apply_bindings(&self.bindings);
 
-        #[rustfmt::skip]
-        let rotation_matrix =  glm::mat4( 
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        );
-
-        let rotation_matrix = glm::ext::rotate(
-            &rotation_matrix,
-            glm::builtin::radians(self.world.camera_rotation),
-            glm::vec3(0.0, 0.0, 1.0)
-        );
-
-        let rotation_matrix = glm::ext::translate(
-            &rotation_matrix, 
-            vec3(0.0, self.world.camera_distance, 0.0 )
-        );
-
         self.ctx
             .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                camera_rotation: rotation_matrix
+                model: self.world.model,
+                view: self.world.view,
+                projection: self.world.projection,
             }));
 
         self.ctx.draw(0, 6, 1);
@@ -260,13 +279,19 @@ mod shader {
         ShaderMeta {
             images: vec!["tex".to_string()],
             uniforms: UniformBlockLayout {
-                uniforms: vec![UniformDesc::new("camera_rotation", UniformType::Mat4)],
+                uniforms: vec![
+                    UniformDesc::new("model", UniformType::Mat4),
+                    UniformDesc::new("view", UniformType::Mat4),
+                    UniformDesc::new("projection", UniformType::Mat4),
+                ],
             },
         }
     }
     #[repr(C)]
     pub struct Uniforms {
-        pub camera_rotation: Mat4
+        pub model: Mat4,
+        pub view: Mat4,
+        pub projection: Mat4,
     }
 }
 
