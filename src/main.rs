@@ -1,4 +1,4 @@
-use glm::{vec3, Vec3, Vec2};
+use glm::{Vec3, Vec2};
 use miniquad::{gl::{GL_FILL, GL_FRONT_AND_BACK, GL_LINE}, *};
 
 

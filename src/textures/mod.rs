@@ -64,7 +64,9 @@ impl Texture {
         }
 
         unsafe {
-        ret.img = stb_image_rust::stbi_load_from_memory(
+
+            stb_image_rust::stbi_set_flip_vertically_on_load(1);
+            ret.img = stb_image_rust::stbi_load_from_memory(
                 contents.as_mut_ptr(),
                 contents.len() as i32,
                 &mut ret.width,
