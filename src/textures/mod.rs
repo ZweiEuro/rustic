@@ -17,8 +17,8 @@ use miniquad::{RenderingBackend, TextureId};
         }		
 */
 pub struct Texture {
-    pub name: String,
-    pub contents: Vec<u8>,
+    pub _name: String,
+    pub _file_contents: Vec<u8>,
 
     pub length: i32,
     pub width: i32,
@@ -39,8 +39,8 @@ impl Texture {
     pub fn new(basename: String) -> Self {
         let mut ret = Self{
 
-            name:  basename.to_owned(),
-            contents: vec![],
+            _name:  basename.to_owned(),
+            _file_contents: vec![],
 
             length: 0,
             width: 0,

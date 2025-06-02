@@ -2,7 +2,7 @@ mod camera;
 pub use camera::Camera;
 use glm::*;
 use miniquad::{
-    Bindings, EventHandler, KeyCode, KeyMods, MouseButton, Pipeline, RenderingBackend, date, window,
+    Bindings, KeyCode, KeyMods, MouseButton, Pipeline, RenderingBackend, date, window,
 };
 
 use crate::{shaders, textures};
@@ -13,7 +13,7 @@ pub struct WorldState {
 
 pub struct StageMetadata {
     pub last_time_update_fn_run: f64,
-    pub time_stage_started: f64,
+    pub _time_stage_started: f64,
 }
 
 pub struct Settings {
@@ -41,7 +41,7 @@ pub struct Stage {
     pub settings: Settings,
 
     pub textures: Vec<textures::Texture>,
-    pub shaders: Vec<shaders::Shader>,
+    pub shaders: Vec<shaders::ShaderFile>,
 
     pub input: input::InputData,
 }
@@ -49,6 +49,12 @@ pub struct Stage {
 // handle updates of various components
 impl Stage {
     pub fn update(&mut self) {
+        for shader in self.shaders.iter_mut() {
+            if shader.reload_if_needed() {
+                // println!("reload!");
+            }
+        }
+
         // a lot of update loops require some kind of time delta
         let delta = date::now() - self.meta.last_time_update_fn_run;
 
@@ -156,7 +162,8 @@ impl Stage {
         // but we want it in "screen space" which means 0.0 is bottom left
         let new_position = Vec2 { x: _x, y: -_y };
 
-        let delta = (new_position - self.input.prev_mouse_location) * self.settings.mouse_sensitivity;
+        let delta =
+            (new_position - self.input.prev_mouse_location) * self.settings.mouse_sensitivity;
 
         self.input.prev_mouse_location = new_position;
 

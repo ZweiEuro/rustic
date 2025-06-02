@@ -1,7 +1,4 @@
-
-use std::collections::HashSet;
-
-use glm::{Vec2, Vec3, radians};
+use glm::{Vec2, Vec3};
 use miniquad::{
     gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES},
     *,
@@ -15,7 +12,6 @@ use stage::{input::InputData, *};
 mod shaders;
 mod stage;
 mod textures;
-
 
 #[rustfmt::skip]
 const M4_UNIT: glm::Mat4 =  glm::Mat4 { 
@@ -34,6 +30,8 @@ struct Vertex {
 impl Stage {
     pub fn new() -> Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
+
+        miniquad::window::set_cursor_grab(true);
 
         #[rustfmt::skip]
         let vertices: [Vertex; 36] = [
@@ -99,7 +97,7 @@ impl Stage {
             images: vec![texture_id],
         };
 
-        let myshader = shaders::Shader::new("basic".to_owned());
+        let myshader = shaders::ShaderFile::new("basic".to_owned());
 
         let shader = ctx
             .new_shader(myshader.get_shadersource(), shader::meta())
@@ -120,8 +118,7 @@ impl Stage {
         );
 
         let settings = Settings {
-
-        mouse_sensitivity: 0.2,
+            mouse_sensitivity: 0.2,
 
             render_wireframe: false,
             debug_toggle_1: false,
@@ -129,7 +126,6 @@ impl Stage {
             debug_toggle_3: false,
             debug_toggle_4: false,
         };
-
 
         Stage {
             pipeline,
@@ -170,26 +166,19 @@ impl Stage {
             },
             meta: StageMetadata {
                 last_time_update_fn_run: date::now(),
-                time_stage_started: date::now(),
+                _time_stage_started: date::now(),
             },
         }
     }
 }
 
-
 impl EventHandler for Stage {
     fn update(&mut self) {
-        for shader in self.shaders.iter_mut() {
-            if shader.reload_if_needed() {
-                // println!("reload!");
-            }
-        }
-
-self.update();
+        self.update();
     }
 
-    fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {   
-       self.key_down_event(_keycode, _keymods, _repeat); 
+    fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
+        self.key_down_event(_keycode, _keymods, _repeat);
     }
 
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
