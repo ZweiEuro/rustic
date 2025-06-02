@@ -1,14 +1,12 @@
-use std::{
-    collections::HashSet,
-    sync::{LazyLock, Mutex},
-};
+
+use std::collections::HashSet;
 
 use glm::{Vec2, Vec3, radians};
 use miniquad::{
     gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES},
     *,
 };
-use stage::*;
+use stage::{input::InputData, *};
 
 /**
 * General Notes:
@@ -17,6 +15,7 @@ use stage::*;
 mod shaders;
 mod stage;
 mod textures;
+
 
 #[rustfmt::skip]
 const M4_UNIT: glm::Mat4 =  glm::Mat4 { 
@@ -31,12 +30,6 @@ struct Vertex {
     pos: Vec3,
     uv: Vec2,
 }
-
-
-const CAMERA_SPEED: f32 = 10.0;
-const MOUSE_SENSITIVITY: f32 = 0.2;
-
-
 
 impl Stage {
     pub fn new() -> Stage {
@@ -127,6 +120,9 @@ impl Stage {
         );
 
         let settings = Settings {
+
+        mouse_sensitivity: 0.2,
+
             render_wireframe: false,
             debug_toggle_1: false,
             debug_toggle_2: false,
@@ -134,7 +130,6 @@ impl Stage {
             debug_toggle_4: false,
         };
 
-        let perspective = glm::ext::perspective(glm::radians(45.0), 1.0, 0.1, 100.0);
 
         Stage {
             pipeline,
@@ -143,11 +138,7 @@ impl Stage {
             settings,
             textures: vec![texture],
             shaders: vec![myshader],
-            input: Input {
-                pressed_keys: HashSet::new(),
-                pressed_mouse_buttons: HashSet::new(),
-                prev_mouse_location: Vec2 { x: 0.0, y: 0.0 },
-            },
+            input: InputData::new(),
             world: WorldState {
                 cam: Camera {
                     camera_pos: Vec3 {
@@ -168,10 +159,14 @@ impl Stage {
 
                     pitch: 0.0,
                     yaw: -90.0,
+                    camera_speed: 5.2,
+
+                    // perspective
+                    fov_y_deg: 45.0,
+                    aspect_ratio: 1.0,
+                    z_near: 0.1,
+                    z_far: 100.0,
                 },
-                model: M4_UNIT.clone(),
-                view: M4_UNIT.clone(),
-                projection: perspective,
             },
             meta: StageMetadata {
                 last_time_update_fn_run: date::now(),
@@ -181,6 +176,7 @@ impl Stage {
     }
 }
 
+
 impl EventHandler for Stage {
     fn update(&mut self) {
         for shader in self.shaders.iter_mut() {
@@ -189,117 +185,28 @@ impl EventHandler for Stage {
             }
         }
 
-        let delta = date::now() - self.meta.last_time_update_fn_run;
-
-        let pressed_keys = self.input.pressed_keys.clone();
-
-        // forward and back
-        if pressed_keys.contains(&KeyCode::W) {
-            self.world.cam.move_forward(CAMERA_SPEED * delta as f32);
-        }
-
-        if pressed_keys.contains(&KeyCode::S) {
-            self.world.cam.move_backwards(CAMERA_SPEED * delta as f32);
-        }
-
-        // left and right
-        if pressed_keys.contains(&KeyCode::A) {
-            self.world.cam.move_left(CAMERA_SPEED * delta as f32);
-        }
-
-        if pressed_keys.contains(&KeyCode::D) {
-            self.world.cam.move_right(CAMERA_SPEED * delta as f32);
-        }
-
-        // up and down
-        if pressed_keys.contains(&KeyCode::Space) {
-            self.world.cam.move_up(CAMERA_SPEED * delta as f32);
-        }
-
-        if pressed_keys.contains(&KeyCode::C) {
-            self.world.cam.move_down(CAMERA_SPEED * delta as f32);
-        }
-
-        self.meta.last_time_update_fn_run = date::now();
+self.update();
     }
 
-    fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
-        // put all the pressed keys in a set so we can check em later if they are pressed down or
-        // not, remove them from the set when they are released
-        match _keycode {
-            KeyCode::Escape => {
-                for texture in self.textures.iter_mut() {
-                    texture.delete_texture(&mut self.ctx);
-                }
-                window::request_quit();
-            }
-
-            KeyCode::Key1 => {
-                self.settings.render_wireframe = !self.settings.render_wireframe;
-                self.settings.debug_toggle_1 = !self.settings.debug_toggle_1;
-                println!("Toggle wireframe {}", self.settings.render_wireframe);
-            }
-
-            KeyCode::Key2 => {
-                self.settings.debug_toggle_2 = !self.settings.debug_toggle_2;
-                println!("toggled debug 2");
-            }
-
-            KeyCode::Key3 => {
-                self.settings.debug_toggle_3 = !self.settings.debug_toggle_3;
-                println!("toggled debug 3");
-            }
-
-            KeyCode::Key4 => {
-                self.settings.debug_toggle_4 = !self.settings.debug_toggle_4;
-                println!("toggled debug 4");
-            }
-
-            _ => {
-                self.input.pressed_keys.insert(_keycode);
-            }
-        }
+    fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {   
+       self.key_down_event(_keycode, _keymods, _repeat); 
     }
 
     fn key_up_event(&mut self, _keycode: KeyCode, _keymods: KeyMods) {
-        self.input.pressed_keys.remove(&_keycode);
+        self.key_up_event(_keycode, _keymods);
     }
 
     fn mouse_button_down_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
-        self.input.pressed_mouse_buttons.insert(_button);
-        println!("button down at {:?}", self.input.prev_mouse_location);
+        self.mouse_button_down_event(_button, _x, _y);
     }
 
     fn mouse_button_up_event(&mut self, _button: MouseButton, _x: f32, _y: f32) {
-        self.input.pressed_mouse_buttons.remove(&_button);
+        self.mouse_button_up_event(_button, _x, _y);
     }
 
     fn mouse_motion_event(&mut self, _x: f32, _y: f32) {
-        if !self
-            .input
-            .pressed_mouse_buttons
-            .contains(&MouseButton::Left)
-        {
-            // nothing to do per se
-            self.input.prev_mouse_location = Vec2 { x: _x, y: -_y };
-            return;
-        }
-
-        // inverse y since the mouse position is top-left 0.0
-        // but we want it in "screen space" which means 0.0 is bottom left
-        let new_position = Vec2 { x: _x, y: -_y };
-
-        let delta = (new_position - self.input.prev_mouse_location) * MOUSE_SENSITIVITY;
-
-        self.input.prev_mouse_location = new_position;
-
-        if delta.x == 0.0 && delta.y == 0.0 {
-            return;
-        }
-
-        self.world.cam.change_pitch_yaw(delta.x, delta.y);
+        self.mouse_motion_event(_x, _y);
     }
-
     fn draw(&mut self) {
         self.ctx.begin_default_pass(Default::default());
 
@@ -340,7 +247,7 @@ impl EventHandler for Stage {
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
                     model: glm::ext::translate(&M4_UNIT, *pos).clone(),
                     view: self.world.cam.get_view_matrix(),
-                    projection: self.world.projection,
+                    projection: self.world.cam.get_perspective_matrix(),
                 }));
 
             unsafe {

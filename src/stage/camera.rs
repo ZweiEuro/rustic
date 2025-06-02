@@ -7,34 +7,49 @@ pub struct Camera {
 
     pub pitch: f32,
     pub yaw: f32,
+
+    // multiplied with the direction the camera is moving to
+    // most likly applied per second
+    pub camera_speed: f32,
+
+    // the current projection matrix of the camera, may be orthogonal
+    // or perspective
+    pub fov_y_deg: f32,
+    pub aspect_ratio: f32,
+    pub z_near: f32,
+    pub z_far: f32,
 }
 
 // implement camera movement
 impl Camera {
-    pub fn move_forward(&mut self, direction_scalar: f32) {
-        self.camera_pos = self.camera_pos + (self.camera_front * direction_scalar);
+    pub fn move_forward(&mut self, time_delta: f32) {
+        self.camera_pos = self.camera_pos + (self.camera_front * self.camera_speed * time_delta);
     }
 
-    pub fn move_backwards(&mut self, direction_scalar: f32) {
-        self.camera_pos = self.camera_pos - (self.camera_front * direction_scalar);
+    pub fn move_backwards(&mut self, time_delta: f32) {
+        self.camera_pos = self.camera_pos - (self.camera_front * self.camera_speed * time_delta);
     }
 
-    pub fn move_left(&mut self, direction_scalar: f32) {
+    pub fn move_left(&mut self, time_delta: f32) {
         self.camera_pos = self.camera_pos
-            - glm::normalize(glm::cross(self.camera_front, self.camera_up)) * direction_scalar;
+            - glm::normalize(glm::cross(self.camera_front, self.camera_up))
+                * self.camera_speed
+                * time_delta;
     }
 
-    pub fn move_right(&mut self, direction_scalar: f32) {
+    pub fn move_right(&mut self, time_delta: f32) {
         self.camera_pos = self.camera_pos
-            + glm::normalize(glm::cross(self.camera_front, self.camera_up)) * direction_scalar;
+            + glm::normalize(glm::cross(self.camera_front, self.camera_up))
+                * self.camera_speed
+                * time_delta;
     }
 
-    pub fn move_up(&mut self, direction_scalar: f32) {
-        self.camera_pos = self.camera_pos + (self.camera_up * direction_scalar);
+    pub fn move_up(&mut self, time_delta: f32) {
+        self.camera_pos = self.camera_pos + (self.camera_up * self.camera_speed * time_delta);
     }
 
-    pub fn move_down(&mut self, direction_scalar: f32) {
-        self.camera_pos = self.camera_pos - (self.camera_up * direction_scalar);
+    pub fn move_down(&mut self, time_delta: f32) {
+        self.camera_pos = self.camera_pos - (self.camera_up * self.camera_speed * time_delta);
     }
 
     /**
@@ -69,6 +84,15 @@ impl Camera {
             self.camera_pos,
             self.camera_pos + self.camera_front,
             self.camera_up,
+        )
+    }
+
+    pub fn get_perspective_matrix(&self) -> Matrix4<f32> {
+        glm::ext::perspective(
+            glm::radians(self.fov_y_deg),
+            self.aspect_ratio,
+            self.z_near,
+            self.z_far,
         )
     }
 }
