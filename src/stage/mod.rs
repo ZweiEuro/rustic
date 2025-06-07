@@ -1,6 +1,5 @@
 mod camera;
 pub use camera::Camera;
-use glm::*;
 use miniquad::{
     Bindings, KeyCode, KeyMods, MouseButton, Pipeline, RenderingBackend, date, window,
 };
@@ -154,13 +153,13 @@ impl Stage {
             .contains(&MouseButton::Left)
         {
             // nothing to do per se
-            self.input.prev_mouse_location = Vec2 { x: _x, y: -_y };
+            self.input.prev_mouse_location = glam::Vec2 { x: _x, y: -_y };
             return;
         }
 
         // inverse y since the mouse position is top-left 0.0
         // but we want it in "screen space" which means 0.0 is bottom left
-        let new_position = Vec2 { x: _x, y: -_y };
+        let new_position = glam::Vec2 { x: _x, y: -_y };
 
         let delta =
             (new_position - self.input.prev_mouse_location) * self.settings.mouse_sensitivity;
@@ -176,7 +175,6 @@ impl Stage {
 }
 
 pub mod input {
-    use glm::Vec2;
     use miniquad::{KeyCode, MouseButton};
     use std::collections::HashSet;
 
@@ -184,7 +182,7 @@ pub mod input {
         pub pressed_keys: HashSet<KeyCode>,
         pub pressed_mouse_buttons: HashSet<MouseButton>,
 
-        pub prev_mouse_location: Vec2,
+        pub prev_mouse_location: glam::Vec2,
     }
 
     impl InputData {
@@ -192,7 +190,7 @@ pub mod input {
             Self {
                 pressed_keys: HashSet::new(),
                 pressed_mouse_buttons: HashSet::new(),
-                prev_mouse_location: Vec2 { x: 0.0, y: 0.0 },
+                prev_mouse_location: glam::Vec2 { x: 0.0, y: 0.0 },
             }
         }
     }

@@ -1,4 +1,3 @@
-use glm::{Vec2, Vec3};
 use miniquad::{
     gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES},
     *,
@@ -13,18 +12,10 @@ mod shaders;
 mod stage;
 mod textures;
 
-#[rustfmt::skip]
-const M4_UNIT: glm::Mat4 =  glm::Mat4 { 
-    c0: glm::Vec4{ x: 1.0, y: 0.0, z: 0.0, w: 0.0},
-    c1: glm::Vec4{ x: 0.0, y: 1.0, z: 0.0, w: 0.0},
-    c2: glm::Vec4{ x: 0.0, y: 0.0, z: 1.0, w: 0.0},
-    c3: glm::Vec4{ x: 0.0, y: 0.0, z: 0.0, w: 1.0},
-};
-
 #[repr(C)]
 struct Vertex {
-    pos: Vec3,
-    uv: Vec2,
+    pos: glam::Vec3,
+    uv: glam::Vec2,
 }
 
 impl Stage {
@@ -32,45 +23,44 @@ impl Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
         miniquad::window::set_cursor_grab(true);
-
         #[rustfmt::skip]
         let vertices: [Vertex; 36] = [
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
-            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
-            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y: -0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 1.0, y: 1.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x:  0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 1.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z:  0.5}, uv: Vec2 { x: 0.0, y: 0.0}},
-            Vertex { pos: Vec3 { x: -0.5, y:  0.5, z: -0.5}, uv: Vec2 { x: 0.0, y: 1.0}},
+            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
+            Vertex { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 1.0)},
+            Vertex { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
+            Vertex { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
         ];
 
         let vertex_buffer = ctx.new_buffer(
@@ -235,7 +225,7 @@ impl EventHandler for Stage {
             self.ctx
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
                     model: glam::Mat4::from_translation(*pos),
-                    view: self.world.cam.get_view_matrix() ,
+                    view: self.world.cam.get_view_matrix(),
                     projection: self.world.cam.get_perspective_matrix(),
                 }));
 

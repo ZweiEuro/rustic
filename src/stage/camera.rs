@@ -1,5 +1,4 @@
 use glam::*;
-use glm::ext::look_at;
 
 pub struct Camera {
     pub camera_pos: Vec3,
@@ -67,7 +66,7 @@ impl Camera {
 
         let direction = Vec3 {
             x: self.yaw.to_radians().cos() * self.pitch.to_radians().cos(),
-            y: glm::sin(glm::radians(self.pitch)),
+            y: self.pitch.to_radians().sin(),
             z: self.yaw.to_radians().sin() * self.pitch.to_radians().cos(),
         };
 
