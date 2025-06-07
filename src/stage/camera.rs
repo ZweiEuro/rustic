@@ -1,4 +1,5 @@
-use glm::*;
+use glam::*;
+use glm::ext::look_at;
 
 pub struct Camera {
     pub camera_pos: Vec3,
@@ -32,16 +33,12 @@ impl Camera {
 
     pub fn move_left(&mut self, time_delta: f32) {
         self.camera_pos = self.camera_pos
-            - glm::normalize(glm::cross(self.camera_front, self.camera_up))
-                * self.camera_speed
-                * time_delta;
+            - self.camera_front.cross(self.camera_up).normalize() * self.camera_speed * time_delta;
     }
 
     pub fn move_right(&mut self, time_delta: f32) {
         self.camera_pos = self.camera_pos
-            + glm::normalize(glm::cross(self.camera_front, self.camera_up))
-                * self.camera_speed
-                * time_delta;
+            + self.camera_front.cross(self.camera_up).normalize() * self.camera_speed * time_delta;
     }
 
     pub fn move_up(&mut self, time_delta: f32) {
@@ -69,27 +66,27 @@ impl Camera {
         self.pitch = self.pitch.clamp(-89.0, 89.0);
 
         let direction = Vec3 {
-            x: glm::cos(radians(self.yaw)) * glm::cos(glm::radians(self.pitch)),
+            x: self.yaw.to_radians().cos() * self.pitch.to_radians().cos(),
             y: glm::sin(glm::radians(self.pitch)),
-            z: glm::sin(radians(self.yaw)) * glm::cos(glm::radians(self.pitch)),
+            z: self.yaw.to_radians().sin() * self.pitch.to_radians().cos(),
         };
 
-        self.camera_front = glm::normalize(direction);
+        self.camera_front = direction.normalize();
     }
 }
 
 impl Camera {
-    pub fn get_view_matrix(&self) -> Matrix4<f32> {
-        glm::ext::look_at(
+    pub fn get_view_matrix(&self) -> glam::f32::Mat4 {
+        glam::f32::Mat4::look_at_rh(
             self.camera_pos,
             self.camera_pos + self.camera_front,
             self.camera_up,
         )
     }
 
-    pub fn get_perspective_matrix(&self) -> Matrix4<f32> {
-        glm::ext::perspective(
-            glm::radians(self.fov_y_deg),
+    pub fn get_perspective_matrix(&self) -> glam::f32::Mat4 {
+        glam::f32::Mat4::perspective_rh(
+            self.fov_y_deg.to_radians(),
             self.aspect_ratio,
             self.z_near,
             self.z_far,

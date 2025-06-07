@@ -137,17 +137,17 @@ impl Stage {
             input: InputData::new(),
             world: WorldState {
                 cam: Camera {
-                    camera_pos: Vec3 {
+                    camera_pos: glam::Vec3 {
                         x: 0.0,
                         y: 0.0,
                         z: 10.0,
                     },
-                    camera_front: Vec3 {
+                    camera_front: glam::Vec3 {
                         x: 0.0,
                         y: 0.0,
                         z: -1.0,
                     },
-                    camera_up: Vec3 {
+                    camera_up: glam::Vec3 {
                         x: 0.0,
                         y: 1.0,
                         z: 0.0,
@@ -218,24 +218,24 @@ impl EventHandler for Stage {
         self.ctx.apply_bindings(&self.bindings);
 
         #[rustfmt::skip]
-        let cube_pos: [Vec3; 10] = [
-            Vec3 { x:  0.0, y:  0.0,z:  0.0 },
-            Vec3 { x:  2.0, y:  5.0,z: -15.0 },
-            Vec3 { x: -1.5, y: -2.2,z: -2.5 },
-            Vec3 { x: -3.8, y: -2.0,z: -12.3 },
-            Vec3 { x:  2.4, y: -0.4,z: -3.5 },
-            Vec3 { x: -1.7, y:  3.0,z: -7.5 },
-            Vec3 { x:  1.3, y: -2.0,z: -2.5 },
-            Vec3 { x:  1.5, y:  2.0,z: -2.5 },
-            Vec3 { x:  1.5, y:  0.2,z: -1.5 },
-            Vec3 { x: -1.3, y:  1.0,z: -1.5 },
+        let cube_pos: [glam::Vec3; 10] = [
+            glam::Vec3 { x:  0.0, y:  0.0,z:  0.0 },
+            glam::Vec3 { x:  2.0, y:  5.0,z: -15.0 },
+            glam::Vec3 { x: -1.5, y: -2.2,z: -2.5 },
+            glam::Vec3 { x: -3.8, y: -2.0,z: -12.3 },
+            glam::Vec3 { x:  2.4, y: -0.4,z: -3.5 },
+            glam::Vec3 { x: -1.7, y:  3.0,z: -7.5 },
+            glam::Vec3 { x:  1.3, y: -2.0,z: -2.5 },
+            glam::Vec3 { x:  1.5, y:  2.0,z: -2.5 },
+            glam::Vec3 { x:  1.5, y:  0.2,z: -1.5 },
+            glam::Vec3 { x: -1.3, y:  1.0,z: -1.5 },
         ];
 
         for pos in cube_pos.iter() {
             self.ctx
                 .apply_uniforms(UniformsSource::table(&shader::Uniforms {
-                    model: glm::ext::translate(&M4_UNIT, *pos).clone(),
-                    view: self.world.cam.get_view_matrix(),
+                    model: glam::Mat4::from_translation(*pos),
+                    view: self.world.cam.get_view_matrix() ,
                     projection: self.world.cam.get_perspective_matrix(),
                 }));
 
@@ -264,7 +264,6 @@ fn main() {
 }
 
 mod shader {
-    use glm::Mat4;
     use miniquad::*;
     pub fn meta() -> ShaderMeta {
         ShaderMeta {
@@ -280,8 +279,8 @@ mod shader {
     }
     #[repr(C)]
     pub struct Uniforms {
-        pub model: Mat4,
-        pub view: Mat4,
-        pub projection: Mat4,
+        pub model: glam::f32::Mat4,
+        pub view: glam::f32::Mat4,
+        pub projection: glam::f32::Mat4,
     }
 }
