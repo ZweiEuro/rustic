@@ -1,10 +1,8 @@
 mod camera;
 pub use camera::Camera;
-use miniquad::{
-    Bindings, KeyCode, KeyMods, MouseButton, Pipeline, RenderingBackend, date, window,
-};
+use miniquad::{Bindings, KeyCode, KeyMods, MouseButton, Pipeline, RenderingBackend, date, window};
 
-use crate::{shaders, textures};
+use crate::{objects::RenderableObject, shaders, textures};
 
 pub struct WorldState {
     pub cam: Camera,
@@ -35,14 +33,14 @@ pub struct Stage {
     pub world: WorldState,
 
     pub pipeline: Pipeline,
-    pub bindings: Bindings,
 
     pub settings: Settings,
 
-    pub textures: Vec<textures::Texture>,
     pub shaders: Vec<shaders::ShaderFile>,
 
     pub input: input::InputData,
+
+    pub renderable_objects: Vec<Box<dyn RenderableObject>>,
 }
 
 // handle updates of various components
@@ -101,8 +99,8 @@ impl Stage {
         // not, remove them from the set when they are released
         match _keycode {
             KeyCode::Escape => {
-                for texture in self.textures.iter_mut() {
-                    texture.delete_texture(&mut self.ctx);
+                for object in self.renderable_objects.iter_mut() {
+                    object.drop_gl_resources(&mut self.ctx);
                 }
                 window::request_quit();
             }
