@@ -19,7 +19,6 @@ impl Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
         miniquad::window::set_cursor_grab(true);
-
         let mut test_textured_cube = TestTexturedCube::new();
 
         let myshader = shaders::ShaderFile::new("basic".to_owned());

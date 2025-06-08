@@ -115,7 +115,6 @@ impl RenderableObject for TestTexturedCube {
         }
 
         if self.texture_id.is_none() {
-            println!("is is null");
             let texture = textures::Texture::new("test.png".to_owned());
 
             self.texture_id = Some(ctx.new_texture_from_rgba8(
