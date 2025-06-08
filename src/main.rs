@@ -90,6 +90,7 @@ impl Stage {
             meta: StageMetadata {
                 last_time_update_fn_run: date::now(),
                 _time_stage_started: date::now(),
+                exited: false,
             },
             renderable_objects: vec![Box::new(test_textured_cube)],
         }
@@ -99,6 +100,10 @@ impl Stage {
 impl EventHandler for Stage {
     fn update(&mut self) {
         self.update();
+    }
+
+    fn quit_requested_event(&mut self) {
+        self.quit_requested_event();
     }
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
@@ -121,6 +126,10 @@ impl EventHandler for Stage {
         self.mouse_motion_event(_x, _y);
     }
     fn draw(&mut self) {
+        if self.meta.exited {
+            return;
+        }
+
         self.ctx.begin_default_pass(Default::default());
 
         unsafe {
@@ -170,7 +179,7 @@ impl EventHandler for Stage {
                 }));
 
             unsafe {
-                gl::glDrawArrays(GL_TRIANGLES, 0, 36);
+                gl::glDrawArrays(GL_TRIANGLES, 0, 6);
             }
         }
 

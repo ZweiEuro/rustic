@@ -11,6 +11,8 @@ pub struct WorldState {
 pub struct StageMetadata {
     pub last_time_update_fn_run: f64,
     pub _time_stage_started: f64,
+
+    pub exited: bool,
 }
 
 pub struct Settings {
@@ -94,15 +96,20 @@ impl Stage {
 
 // mouse and keyboard input
 impl Stage {
+    pub fn quit_requested_event(&mut self) {
+        println!("Exit clearing objects");
+        for object in self.renderable_objects.iter_mut() {
+            object.drop_gl_resources(&mut self.ctx);
+        }
+    }
+
     pub fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
         // put all the pressed keys in a set so we can check em later if they are pressed down or
         // not, remove them from the set when they are released
         match _keycode {
             KeyCode::Escape => {
-                for object in self.renderable_objects.iter_mut() {
-                    object.drop_gl_resources(&mut self.ctx);
-                }
                 window::request_quit();
+                self.meta.exited = true;
             }
 
             KeyCode::Key1 => {

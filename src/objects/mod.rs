@@ -24,9 +24,6 @@ pub trait RenderableObject {
     /// Should any resource be missing (opengl, texture, etc.) create
     fn get_bindings(self: &mut Self, ctx: &mut BackendArg) -> Bindings;
 
-    /// security check that everything was deleted correctly
-    fn drop(self: &mut Self);
-
     /// deallocate any resources that are allocated on opengl
     fn drop_gl_resources(self: &mut Self, ctx: &mut BackendArg);
 }
@@ -54,30 +51,35 @@ impl TestTexturedCube {
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 0.0)},
+
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
+
                 DataVertex3DTexture { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
+
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
+
                 DataVertex3DTexture { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
@@ -113,6 +115,7 @@ impl RenderableObject for TestTexturedCube {
         }
 
         if self.texture_id.is_none() {
+            println!("is is null");
             let texture = textures::Texture::new("test.png".to_owned());
 
             self.texture_id = Some(ctx.new_texture_from_rgba8(
@@ -150,11 +153,17 @@ impl RenderableObject for TestTexturedCube {
             ctx.delete_buffer(val);
         }
 
-        if let Some( val) = self.texture_id.take() {
+        if let Some(val) = self.texture_id.take() {
             ctx.delete_texture(val);
         }
-    }
 
+        if let Some(val) = self.texture.take() {
+            drop(val);
+        }
+    }
+}
+
+impl Drop for TestTexturedCube {
     fn drop(self: &mut Self) {
         if self.vertex_buffer_id.is_some()
             || self.texture.is_some()

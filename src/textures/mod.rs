@@ -58,6 +58,7 @@ impl Texture {
 // must be deallocated correctly when dropped
 impl Drop for Texture {
     fn drop(&mut self) {
+        println!("dropped texture");
         unsafe {
             stb_image_rust::c_runtime::free(self.img);
         }
