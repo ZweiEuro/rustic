@@ -2,8 +2,10 @@ use miniquad::{
     gl::{GL_DEPTH_BUFFER_BIT, GL_FILL, GL_FRONT_AND_BACK, GL_LINE, GL_TRIANGLES},
     *,
 };
+use objects::{RenderableObject, TestTexturedCube};
 use stage::{input::InputData, *};
 
+mod objects;
 /**
 * General Notes:
 * - Not sure if mipmaps work correctly
@@ -12,80 +14,12 @@ mod shaders;
 mod stage;
 mod textures;
 
-#[repr(C)]
-struct Vertex {
-    pos: glam::Vec3,
-    uv: glam::Vec2,
-}
-
 impl Stage {
     pub fn new() -> Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
         miniquad::window::set_cursor_grab(true);
-        #[rustfmt::skip]
-        let vertices: [Vertex; 36] = [
-            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
-            Vertex { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 1.0)},
-            Vertex { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5,  0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
-            Vertex { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
-        ];
-
-        let vertex_buffer = ctx.new_buffer(
-            BufferType::VertexBuffer,
-            BufferUsage::Immutable,
-            BufferSource::slice(&vertices),
-        );
-
-        let indices: [u16; 6] = [0, 1, 3, 1, 2, 3];
-        let index_buffer = ctx.new_buffer(
-            BufferType::IndexBuffer,
-            BufferUsage::Immutable,
-            BufferSource::slice(&indices),
-        );
-
-        let mut texture = textures::Texture::new("test.png".to_owned());
-
-        let texture_id = texture.get_texture_id(&mut ctx);
-        ctx.texture_set_filter(texture_id, FilterMode::Nearest, MipmapFilterMode::None);
-
-        let bindings = Bindings {
-            vertex_buffers: vec![vertex_buffer],
-            index_buffer: index_buffer,
-            images: vec![texture_id],
-        };
+        let mut test_textured_cube = TestTexturedCube::new();
 
         let myshader = shaders::ShaderFile::new("basic".to_owned());
 
@@ -119,10 +53,8 @@ impl Stage {
 
         Stage {
             pipeline,
-            bindings,
             ctx,
             settings,
-            textures: vec![texture],
             shaders: vec![myshader],
             input: InputData::new(),
             world: WorldState {
@@ -157,7 +89,9 @@ impl Stage {
             meta: StageMetadata {
                 last_time_update_fn_run: date::now(),
                 _time_stage_started: date::now(),
+                exited: false,
             },
+            renderable_objects: vec![Box::new(test_textured_cube)],
         }
     }
 }
@@ -165,6 +99,10 @@ impl Stage {
 impl EventHandler for Stage {
     fn update(&mut self) {
         self.update();
+    }
+
+    fn quit_requested_event(&mut self) {
+        self.quit_requested_event();
     }
 
     fn key_down_event(&mut self, _keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
@@ -187,6 +125,10 @@ impl EventHandler for Stage {
         self.mouse_motion_event(_x, _y);
     }
     fn draw(&mut self) {
+        if self.meta.exited {
+            return;
+        }
+
         self.ctx.begin_default_pass(Default::default());
 
         unsafe {
@@ -204,8 +146,14 @@ impl EventHandler for Stage {
             }
         }
 
+        let bindings = self
+            .renderable_objects
+            .get_mut(0)
+            .unwrap()
+            .get_bindings(&mut self.ctx);
+
         self.ctx.apply_pipeline(&self.pipeline);
-        self.ctx.apply_bindings(&self.bindings);
+        self.ctx.apply_bindings(&bindings);
 
         #[rustfmt::skip]
         let cube_pos: [glam::Vec3; 10] = [
