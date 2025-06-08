@@ -178,7 +178,7 @@ impl EventHandler for Stage {
                 }));
 
             unsafe {
-                gl::glDrawArrays(GL_TRIANGLES, 0, 6);
+                gl::glDrawArrays(GL_TRIANGLES, 0, 36);
             }
         }
 

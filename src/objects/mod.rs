@@ -7,11 +7,14 @@ use miniquad::{
 
 use crate::textures;
 
+
+#[repr(C)]
 pub struct DataVertex3DTexture {
     pub pos: glam::Vec3,
     pub uv: glam::Vec2,
 }
 
+#[repr(C)]
 pub struct DataVertex3D {
     pos: glam::Vec3,
 }
@@ -106,7 +109,7 @@ impl RenderableObject for TestTexturedCube {
         }
 
         if self.index_buffer_id.is_none() {
-            let indices: [u16; 6] = [0, 1, 3, 1, 2, 3];
+            let indices: [u16; 0] = [];
             self.index_buffer_id = Some(ctx.new_buffer(
                 BufferType::IndexBuffer,
                 BufferUsage::Immutable,
