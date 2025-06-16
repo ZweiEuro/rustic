@@ -7,7 +7,6 @@ use miniquad::{
 
 use crate::textures;
 
-
 #[repr(C)]
 pub struct DataVertex3DTexture {
     pub pos: glam::Vec3,
@@ -48,13 +47,14 @@ impl TestTexturedCube {
         TestTexturedCube {
             #[rustfmt::skip]
             vertices: [
+                // back 
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5, -0.5), uv: glam::vec2(1.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5, -0.5), uv: glam::vec2(1.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5,  0.5, -0.5), uv: glam::vec2(0.0, 1.0)},
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5, -0.5), uv: glam::vec2(0.0, 0.0)},
-
+                // front
                 DataVertex3DTexture { pos: glam::vec3(-0.5, -0.5,  0.5), uv: glam::vec2(0.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5, -0.5,  0.5), uv: glam::vec2(1.0, 0.0)},
                 DataVertex3DTexture { pos: glam::vec3( 0.5,  0.5,  0.5), uv: glam::vec2(1.0, 1.0)},
